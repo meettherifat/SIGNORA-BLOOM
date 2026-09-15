@@ -4,9 +4,10 @@ import { Lock, ShieldCheck, Eye, EyeOff, KeyRound, AlertCircle, ArrowLeft } from
 interface AdminLoginProps {
   onLoginSuccess: (token: string, user: any) => void;
   onBackToStore: () => void;
+  notice?: string | null;
 }
 
-export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackToStore }) => {
+export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackToStore, notice }) => {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -42,8 +43,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
         return;
       }
 
-      // Success
+      // Success: Save token securely to session storage
       sessionStorage.setItem('sb_admin_token', data.token);
+      sessionStorage.setItem('admin_token', data.token);
       onLoginSuccess(data.token, data.user);
     } catch (err: any) {
       setError('Network connection error. Ensure the server is reachable.');
@@ -99,6 +101,14 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
             Protected by server-side 256-bit session encryption and brute-force intrusion defense.
           </div>
         </div>
+
+        {/* Security Notice (e.g. Session expired or unauthenticated direct access attempt) */}
+        {notice && !error && (
+          <div className="mb-6 p-3 bg-[#FAF3EC] border border-[#E4D3C0] text-[#7A583A] rounded-xs flex items-start gap-2.5 text-xs animate-in fade-in">
+            <KeyRound className="w-4 h-4 shrink-0 mt-0.5 text-[#8C6B52]" />
+            <div className="leading-snug">{notice}</div>
+          </div>
+        )}
 
         {/* Error message */}
         {error && (

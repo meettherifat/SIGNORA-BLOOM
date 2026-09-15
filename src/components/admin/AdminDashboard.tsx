@@ -36,7 +36,9 @@ import { Footer } from '../Footer';
 
 interface AdminDashboardProps {
   token: string;
+  user?: { id: string; role: string } | null;
   onLogout: () => void;
+  onSessionExpired?: () => void;
   onViewPublicSite: () => void;
 }
 
@@ -46,7 +48,9 @@ type DeviceMode = 'mobile' | 'tablet' | 'desktop';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   token,
+  user,
   onLogout,
+  onSessionExpired,
   onViewPublicSite,
 }) => {
   const { content, updateContent, saveContentToServer, resetContentOnServer } = useSiteContent();
@@ -93,6 +97,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             filename: file.name,
           }),
         });
+        if (res.status === 401) {
+          onSessionExpired?.();
+          return;
+        }
         const data = await res.json();
         if (data.success && data.url) {
           onSuccess(data.url);
@@ -117,6 +125,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (result.success) {
       setHasUnsavedChanges(false);
       setTimeout(() => setSaveStatus(null), 4000);
+    } else if (result.message && (result.message.includes('Unauthorized') || result.message.includes('expired'))) {
+      onSessionExpired?.();
     }
   };
 
@@ -133,6 +143,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setHasUnsavedChanges(false);
       setSaveStatus(result);
       setTimeout(() => setSaveStatus(null), 3000);
+    } else if (result.message && (result.message.includes('Unauthorized') || result.message.includes('expired'))) {
+      onSessionExpired?.();
     }
   };
 
@@ -290,6 +302,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               )}
               <span>{isSaving ? 'Publishing...' : 'Save & Publish'}</span>
             </button>
+
+            {/* Authenticated user badge */}
+            {user && (
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-[#FAF5F0] border border-[#E8DFD5] rounded-xs text-[10px] text-[#6E6161]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#3B8A52]" />
+                <span className="font-mono text-[#332B2B]">{user.id}</span>
+                <span className="text-[#A39595]">({user.role})</span>
+              </div>
+            )}
 
             {/* Logout */}
             <button

@@ -69,7 +69,11 @@ export default function App() {
     handleNavigateSection('collections');
   };
 
-  const isAdminRoute = currentPath === '/rifat' || currentPath.startsWith('/rifat/');
+  const isAdminRoute =
+    currentPath === '/rifat' ||
+    currentPath.startsWith('/rifat/') ||
+    currentPath === '/admin' ||
+    currentPath.startsWith('/admin/');
 
   return (
     <SiteContentProvider>
