@@ -14,9 +14,117 @@ const PORT = 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Secure credentials
+// Secure credentials & JWT Secret
 const ADMIN_ID = process.env.ADMIN_ID || '01959524393';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '@sara116';
+const JWT_SECRET = process.env.JWT_SECRET || 'signora_bloom_atelier_secure_jwt_secret_2026_x89';
+
+// JWT Helper: Base64URL encoding/decoding
+function base64UrlEncode(str: string): string {
+  return Buffer.from(str)
+    .toString('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+function base64UrlDecode(str: string): string {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  return Buffer.from(base64, 'base64').toString('utf-8');
+}
+
+// Generate HS256 JWT Token
+interface JwtPayload {
+  sub: string;
+  role: string;
+  iat: number;
+  exp: number;
+  jti: string;
+  iss: string;
+  ip?: string;
+}
+
+function createJwtToken(id: string, role = 'SUPER_ADMIN', ip = ''): string {
+  const header = {
+    alg: 'HS256',
+    typ: 'JWT',
+  };
+  const now = Math.floor(Date.now() / 1000);
+  const payload: JwtPayload = {
+    sub: id,
+    role,
+    iat: now,
+    exp: now + 24 * 60 * 60, // 24-hour expiration
+    jti: crypto.randomBytes(16).toString('hex'),
+    iss: 'signora-bloom-atelier',
+    ip,
+  };
+
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+// Verify HS256 JWT Token with anti-tamper signature check
+function verifyJwtToken(token: string): { valid: boolean; payload?: JwtPayload; error?: string } {
+  if (!token || typeof token !== 'string') {
+    return { valid: false, error: 'Missing token' };
+  }
+
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return { valid: false, error: 'Malformed JWT structure' };
+  }
+
+  const [encodedHeader, encodedPayload, signature] = parts;
+
+  // Verify signature
+  const expectedSignature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64')
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  // Constant-time signature comparison to prevent timing attacks
+  const sigBuffer = Buffer.from(signature);
+  const expectedSigBuffer = Buffer.from(expectedSignature);
+  if (sigBuffer.length !== expectedSigBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedSigBuffer)) {
+    return { valid: false, error: 'Invalid token signature. Tampering detected.' };
+  }
+
+  try {
+    const payload: JwtPayload = JSON.parse(base64UrlDecode(encodedPayload));
+    const now = Math.floor(Date.now() / 1000);
+
+    if (payload.exp && now >= payload.exp) {
+      return { valid: false, error: 'Token has expired' };
+    }
+
+    if (payload.sub !== ADMIN_ID) {
+      return { valid: false, error: 'Invalid token subject' };
+    }
+
+    return { valid: true, payload };
+  } catch {
+    return { valid: false, error: 'Failed to decode token payload' };
+  }
+}
+
+// Revoked tokens blacklist (in-memory, keyed by jti or token)
+const revokedTokens = new Set<string>();
 
 // Server-side active session store (Token -> { createdAt, expiresAt, ip })
 interface ActiveSession {
@@ -66,7 +174,7 @@ function timingSafeCheck(a: string, b: string): boolean {
   return crypto.timingSafeEqual(hashA, hashB);
 }
 
-// Middleware: Require Admin Authentication
+// Middleware: Require Admin Authentication (Supports JWT and active session tokens)
 function requireAdminAuth(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -75,10 +183,29 @@ function requireAdminAuth(req: Request, res: Response, next: NextFunction): void
   }
 
   const token = authHeader.substring(7).trim();
-  const session = activeSessions.get(token);
 
+  // Check if token was explicitly revoked
+  if (revokedTokens.has(token)) {
+    res.status(401).json({ error: 'Unauthorized: Session token has been revoked.' });
+    return;
+  }
+
+  // 1. Try JWT verification first
+  if (token.includes('.')) {
+    const jwtResult = verifyJwtToken(token);
+    if (jwtResult.valid && jwtResult.payload) {
+      if (jwtResult.payload.jti && revokedTokens.has(jwtResult.payload.jti)) {
+        res.status(401).json({ error: 'Unauthorized: JWT token has been revoked.' });
+        return;
+      }
+      return next();
+    }
+  }
+
+  // 2. Fallback to active sessions store (for legacy or direct tokens)
+  const session = activeSessions.get(token);
   if (!session) {
-    res.status(401).json({ error: 'Unauthorized: Session expired or invalid.' });
+    res.status(401).json({ error: 'Unauthorized: Session expired, invalid, or tampered.' });
     return;
   }
 
@@ -160,20 +287,22 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   // Successful login -> Clear rate-limiting records
   loginAttempts.delete(ip);
 
-  // Generate cryptographically secure random session token (256-bit)
-  const token = crypto.randomBytes(32).toString('hex');
+  // Generate cryptographically secure JWT token with HS256 and JTI nonce
+  const jwtToken = createJwtToken(ADMIN_ID, 'SUPER_ADMIN', ip);
+
+  // Also register active session for backward compatibility
   const session: ActiveSession = {
-    token,
+    token: jwtToken,
     id: ADMIN_ID,
     createdAt: now,
     expiresAt: now + 24 * 60 * 60 * 1000, // 24 hours
     ip,
   };
-  activeSessions.set(token, session);
+  activeSessions.set(jwtToken, session);
 
   res.json({
     success: true,
-    token,
+    token: jwtToken,
     user: {
       id: ADMIN_ID,
       role: 'SUPER_ADMIN',
@@ -182,7 +311,7 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   });
 });
 
-// 2. Verify Session Token
+// 2. Verify Session Token (JWT + Session Store anti-tamper check)
 app.get('/api/auth/verify', (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -191,8 +320,38 @@ app.get('/api/auth/verify', (req: Request, res: Response) => {
   }
 
   const token = authHeader.substring(7).trim();
-  const session = activeSessions.get(token);
 
+  // Check if token was revoked
+  if (revokedTokens.has(token)) {
+    res.status(401).json({ valid: false, error: 'Token has been revoked' });
+    return;
+  }
+
+  // 1. Check if token is a signed JWT
+  if (token.includes('.')) {
+    const jwtResult = verifyJwtToken(token);
+    if (!jwtResult.valid || !jwtResult.payload) {
+      res.status(401).json({ valid: false, error: jwtResult.error || 'Invalid or tampered JWT token' });
+      return;
+    }
+
+    if (jwtResult.payload.jti && revokedTokens.has(jwtResult.payload.jti)) {
+      res.status(401).json({ valid: false, error: 'JWT token has been revoked' });
+      return;
+    }
+
+    res.json({
+      valid: true,
+      user: {
+        id: jwtResult.payload.sub,
+        role: jwtResult.payload.role || 'SUPER_ADMIN',
+      },
+    });
+    return;
+  }
+
+  // 2. Fallback to active sessions store
+  const session = activeSessions.get(token);
   if (!session || Date.now() > session.expiresAt) {
     if (session) activeSessions.delete(token);
     res.status(401).json({ valid: false, error: 'Session expired or invalid' });
@@ -208,12 +367,20 @@ app.get('/api/auth/verify', (req: Request, res: Response) => {
   });
 });
 
-// 3. Logout (Revoke Token)
+// 3. Logout (Revoke Token and Blacklist JTI)
 app.post('/api/auth/logout', (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7).trim();
+    revokedTokens.add(token);
     activeSessions.delete(token);
+
+    if (token.includes('.')) {
+      const decoded = verifyJwtToken(token);
+      if (decoded.payload && decoded.payload.jti) {
+        revokedTokens.add(decoded.payload.jti);
+      }
+    }
   }
   res.json({ success: true, message: 'Logged out successfully.' });
 });
