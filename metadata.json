@@ -1,0 +1,6 @@
+{
+  "name": "SIGNORA BLOOM",
+  "description": "Curated accessories for women — an editorial brand showcase celebrating everyday elegance, fine craftsmanship, and timeless style.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
