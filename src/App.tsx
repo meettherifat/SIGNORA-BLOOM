@@ -13,8 +13,26 @@ import { SiteContentProvider } from './context/SiteContentContext';
 import { AdminPage } from './pages/AdminPage';
 
 export default function App() {
+  const getRouteFromUrl = () => {
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (
+      path === '/rifat' ||
+      path.startsWith('/rifat/') ||
+      path === '/admin' ||
+      path.startsWith('/admin/') ||
+      hash === '#rifat' ||
+      hash.startsWith('#/rifat') ||
+      hash === '#admin' ||
+      hash.startsWith('#/admin')
+    ) {
+      return '/rifat';
+    }
+    return path;
+  };
+
   const [currentPath, setCurrentPath] = useState<string>(() => {
-    return window.location.pathname;
+    return getRouteFromUrl();
   });
 
   const [selectedPiece, setSelectedPiece] = useState<Accessory | null>(null);
@@ -22,14 +40,18 @@ export default function App() {
   const [inquiryAccessory, setInquiryAccessory] = useState<Accessory | null>(null);
   const [activeNavSection, setActiveNavSection] = useState<string>('home');
 
-  // Handle popstate for browser back/forward buttons
+  // Handle popstate and hashchange for browser back/forward buttons & direct links
   useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
+    const handleLocationChange = () => {
+      setCurrentPath(getRouteFromUrl());
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
   const navigateTo = (path: string) => {
