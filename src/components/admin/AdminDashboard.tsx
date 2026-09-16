@@ -21,6 +21,12 @@ import {
   ShoppingBag,
   Info,
   ExternalLink,
+  Download,
+  Copy,
+  Check,
+  X,
+  FileCode,
+  Cloud,
 } from 'lucide-react';
 import { SiteContent } from '../../siteContent';
 import { useSiteContent } from '../../context/SiteContentContext';
@@ -146,6 +152,106 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setTimeout(() => setSaveStatus(null), 3000);
     } else if (result.message && (result.message.includes('Unauthorized') || result.message.includes('expired'))) {
       onSessionExpired?.();
+    }
+  };
+
+  // Export & Deployment State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [hasCopiedCode, setHasCopiedCode] = useState(false);
+
+  // Generate clean, TypeScript-typed siteContent.ts source code
+  const getSiteContentTsCode = (): string => {
+    return `export interface SiteContent {
+  brand: {
+    name: string;
+    tagline: string;
+    phone: string;
+    email: string;
+    conciergeHours: string;
+    address: string;
+  };
+  hero: {
+    slides: {
+      id: number;
+      image: string;
+      alt: string;
+      headline: string;
+      buttonText: string;
+    }[];
+  };
+  collections: {
+    id: string;
+    title: string;
+    subtitle: string;
+    category: string;
+    image: string;
+    itemCount: string;
+    span?: string;
+  }[];
+  editorial: {
+    tabs: {
+      id: string;
+      tabLabel: string;
+      headline: string;
+      description: string;
+      mainImage: string;
+      insetDetailImage: string;
+      buttonLabel: string;
+    }[];
+  };
+  giftSection: {
+    badge: string;
+    headline: string;
+    subheadline: string;
+    boxLabel: string;
+    boxTheme: 'crimson' | 'noir' | 'champagne' | 'emerald';
+    perks: { title: string; desc: string }[];
+    features: { number: string; title: string; description: string }[];
+  };
+  products: {
+    id: string;
+    refCode: string;
+    name: string;
+    category: string;
+    categoryLabel: string;
+    price: string;
+    tagline: string;
+    description: string;
+    image: string;
+    badge?: string;
+  }[];
+  footer: {
+    newsletterTitle: string;
+    newsletterDesc: string;
+    copyright: string;
+  };
+}
+
+export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2)};
+`;
+  };
+
+  const handleDownloadSiteContentTs = () => {
+    const code = getSiteContentTsCode();
+    const blob = new Blob([code], { type: 'text/typescript;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'siteContent.ts';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopySiteContentTs = async () => {
+    try {
+      const code = getSiteContentTsCode();
+      await navigator.clipboard.writeText(code);
+      setHasCopiedCode(true);
+      setTimeout(() => setHasCopiedCode(false), 2500);
+    } catch (err) {
+      console.error('Failed to copy code', err);
     }
   };
 
@@ -286,6 +392,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               <RotateCcw className="w-3 h-3" />
               <span className="hidden sm:inline">Reset</span>
+            </button>
+
+            {/* Export Code / Deploy Guide */}
+            <button
+              type="button"
+              onClick={() => setIsExportModalOpen(true)}
+              className="px-2.5 sm:px-3 py-1.5 border border-[#D9C4B0] bg-[#FAF6F1] text-[#634932] hover:bg-[#F2ECE3] text-[10px] uppercase tracking-widest rounded-xs transition-colors flex items-center gap-1 cursor-pointer font-medium"
+              title="Export content for Vercel / GitHub deployment"
+            >
+              <Download className="w-3 h-3" />
+              <span className="hidden md:inline">Export Code</span>
             </button>
 
             {/* Save & Publish */}
@@ -1297,6 +1414,130 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         )}
 
       </div>
+
+      {/* EXPORT & VERCEL DEPLOYMENT MODAL */}
+      {isExportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-[#FFFFFF] max-w-2xl w-full rounded-sm shadow-2xl border border-[#E8DFD5] overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#EFE8E1] bg-[#FAF6F2]">
+              <div className="flex items-center gap-2.5">
+                <FileCode className="w-5 h-5 text-[#8C5D3B]" />
+                <div>
+                  <h3 className="font-serif text-lg font-medium text-[#2A2323]">
+                    Deploy to Vercel & Export Content
+                  </h3>
+                  <p className="text-xs text-[#7A6E6E]">
+                    Sync your CMS changes permanently to <span className="font-mono font-medium">signorabloom.vercel.app</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsExportModalOpen(false)}
+                className="p-1.5 text-[#8A7D7D] hover:text-[#2A2323] hover:bg-[#EFE7DF] rounded-xs transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-5 text-sm text-[#4A4040]">
+              
+              {/* Alert: Why no deployment on Vercel */}
+              <div className="p-3.5 bg-[#FAF7F2] border border-[#E6D7C8] rounded-xs text-xs text-[#6B533E] space-y-1.5 leading-relaxed">
+                <p className="font-semibold text-[#4A3522] flex items-center gap-1.5">
+                  <Info className="w-4 h-4 text-[#8C5D3B]" />
+                  Why is there no deployment showing in Vercel?
+                </p>
+                <p>
+                  Vercel builds strictly from your <strong>Git repository (GitHub)</strong>. Saving changes inside this web admin panel updates your site locally, but does not create a Git commit on GitHub.
+                </p>
+              </div>
+
+              {/* Action 1: Export siteContent.ts */}
+              <div className="border border-[#EADFD5] p-4 rounded-xs bg-[#FFFFFF] space-y-3">
+                <h4 className="font-serif text-base font-medium text-[#2A2323]">
+                  1. Export Your Customized Code
+                </h4>
+                <p className="text-xs text-[#6E6363] leading-relaxed">
+                  Download or copy your customized content file. This includes all your updated products, slides, editorial texts, and prices:
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleDownloadSiteContentTs}
+                    className="px-4 py-2 bg-[#2A2323] hover:bg-[#453939] text-white text-xs uppercase tracking-widest rounded-xs flex items-center gap-2 font-medium cursor-pointer transition-colors shadow-xs"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download siteContent.ts
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopySiteContentTs}
+                    className="px-4 py-2 border border-[#D9C8B8] hover:bg-[#FAF6F2] text-[#4A4040] text-xs uppercase tracking-widest rounded-xs flex items-center gap-2 font-medium cursor-pointer transition-colors"
+                  >
+                    {hasCopiedCode ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-600" />
+                        <span className="text-emerald-700">Copied to Clipboard!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy Code to Clipboard
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Action 2: Steps to deploy on Vercel */}
+              <div className="border border-[#EADFD5] p-4 rounded-xs bg-[#FFFFFF] space-y-2.5">
+                <h4 className="font-serif text-base font-medium text-[#2A2323]">
+                  2. Update & Deploy on Vercel
+                </h4>
+                <ol className="list-decimal list-inside text-xs text-[#5E5353] space-y-2 leading-relaxed">
+                  <li>
+                    In your project repo, replace <code className="bg-[#FAF5F0] text-[#7A5333] px-1 py-0.5 rounded-xs font-mono font-semibold">src/siteContent.ts</code> with the downloaded file.
+                  </li>
+                  <li>
+                    Commit and push your changes to GitHub (<code className="bg-[#FAF5F0] text-[#7A5333] px-1 py-0.5 rounded-xs font-mono font-semibold">git commit -m "Update site content" && git push</code>).
+                  </li>
+                  <li>
+                    <strong>Vercel will automatically start a new deployment</strong> and publish your changes to <span className="font-medium text-[#2A2323]">signorabloom.vercel.app</span>!
+                  </li>
+                </ol>
+              </div>
+
+              {/* Option 3: Cloud Database (Firebase) */}
+              <div className="p-3.5 bg-[#F2F7F4] border border-[#C5E1CF] rounded-xs text-xs text-[#285737] space-y-1">
+                <p className="font-semibold flex items-center gap-1.5 text-[#1D472B]">
+                  <Cloud className="w-4 h-4 text-[#2E7A4A]" />
+                  Want edits to update live worldwide without any Vercel redeploys?
+                </p>
+                <p className="leading-relaxed">
+                  We can connect <strong>Firebase Firestore</strong>. Every time you click "Save & Publish", your changes will save to the cloud and instantly appear for every visitor on all devices worldwide in real time.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 bg-[#FAF7F3] border-t border-[#EFE8E1] flex justify-end">
+              <button
+                type="button"
+                onClick={() => setIsExportModalOpen(false)}
+                className="px-4 py-1.5 border border-[#D9C8B8] text-[#554A4A] hover:bg-[#FFFFFF] text-xs uppercase tracking-widest rounded-xs cursor-pointer font-medium"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

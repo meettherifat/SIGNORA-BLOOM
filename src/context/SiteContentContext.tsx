@@ -10,7 +10,8 @@ interface SiteContentContextType {
   isLoading: boolean;
 }
 
-const STORAGE_KEY = 'sb_atelier_site_content_v2';
+const STORAGE_KEYS = ['sb_atelier_site_content_v2', 'sb_site_content_override'];
+const PRIMARY_STORAGE_KEY = 'sb_atelier_site_content_v2';
 
 const SiteContentContext = createContext<SiteContentContextType | undefined>(undefined);
 
@@ -47,11 +48,13 @@ function mergeWithDefaults(custom: any): SiteContent {
 
 function loadInitialLocalContent(): SiteContent {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        return mergeWithDefaults(parsed);
+    for (const key of STORAGE_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          return mergeWithDefaults(parsed);
+        }
       }
     }
   } catch (err) {
@@ -63,6 +66,24 @@ function loadInitialLocalContent(): SiteContent {
 export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(() => loadInitialLocalContent());
   const [isLoading, setIsLoading] = useState(true);
+
+  // Cross-tab real-time synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && STORAGE_KEYS.includes(e.key) && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && typeof parsed === 'object') {
+            setContent(mergeWithDefaults(parsed));
+          }
+        } catch {
+          // Ignore invalid parse
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Fetch saved content on initial load from server, fallback to local storage
   useEffect(() => {
@@ -78,7 +99,9 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
           const merged = mergeWithDefaults(data.content);
           setContent(merged);
           try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            for (const key of STORAGE_KEYS) {
+              localStorage.setItem(key, JSON.stringify(merged));
+            }
           } catch {
             // Ignore quota errors
           }
@@ -103,10 +126,12 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     newContent: SiteContent,
     token: string
   ): Promise<{ success: boolean; message: string }> => {
-    // 1. Immediately persist locally in React state and localStorage
+    // 1. Immediately persist locally in React state and localStorage across keys
     setContent(newContent);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
+      for (const key of STORAGE_KEYS) {
+        localStorage.setItem(key, JSON.stringify(newContent));
+      }
     } catch (storageErr) {
       console.warn('Could not write to localStorage:', storageErr);
     }
@@ -149,7 +174,9 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // 1. Immediately reset state and purge local storage
     setContent(DEFAULT_SITE_CONTENT);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      for (const key of STORAGE_KEYS) {
+        localStorage.removeItem(key);
+      }
     } catch (storageErr) {
       console.warn('Could not remove from localStorage:', storageErr);
     }
