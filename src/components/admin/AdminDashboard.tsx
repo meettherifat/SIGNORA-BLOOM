@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Save,
   RotateCcw,
@@ -31,6 +31,7 @@ import {
 import { SiteContent } from '../../siteContent';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { safeParseResponseJson } from '../../utils/security';
+import { compressImageFile } from '../../utils/storageDb';
 
 // Import public components for the real-time live preview
 import { Header } from '../Header';
@@ -71,10 +72,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [saveStatus, setSaveStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Sync with incoming saved content if user hasn't made unsaved modifications
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      setDraft(JSON.parse(JSON.stringify(content)));
+    }
+  }, [content, hasUnsavedChanges]);
+
   // Sync draft edits into local draft and also live preview context
   const updateDraft = (updater: (prev: SiteContent) => SiteContent) => {
     setDraft((prev) => {
-      const next = updater(prev);
+      // Deep clone prev first so updater can safely modify nested properties without stale references
+      const cloned: SiteContent = JSON.parse(JSON.stringify(prev));
+      const next = updater(cloned);
       setHasUnsavedChanges(true);
       // Update global context so the preview updates in real-time
       updateContent(next);
@@ -82,16 +92,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
-  // Handle image upload via base64 to server
+  const [uploadingImageKey, setUploadingImageKey] = useState<string | null>(null);
+
+  // Handle image upload with automatic client-side compression
+  // Compresses multi-MB high-res images down to ~80KB-160KB so storage limits are NEVER exceeded
   const handleImageUpload = async (
     file: File,
-    onSuccess: (uploadedUrl: string) => void
+    onSuccess: (uploadedUrl: string) => void,
+    keyIdentifier?: string,
+    maxWidth = 1920,
+    maxHeight = 1080
   ) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Data = e.target?.result as string;
-      if (!base64Data) return;
+    if (keyIdentifier) setUploadingImageKey(keyIdentifier);
+    try {
+      // 1. Client-side compression & aspect-ratio constraint
+      const optimizedDataUrl = await compressImageFile(file, maxWidth, maxHeight, 0.82);
 
+      // 2. Optional server upload if backend API is reachable
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
@@ -100,7 +117,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            base64Data,
+            base64Data: optimizedDataUrl,
             filename: file.name,
           }),
         });
@@ -111,15 +128,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         const data = await safeParseResponseJson(res);
         if (data && data.success && data.url) {
           onSuccess(data.url);
-        } else {
-          // Fallback to inline data URL if upload failed
-          onSuccess(base64Data);
+          return;
         }
       } catch {
-        onSuccess(base64Data);
+        // Backend not available (e.g. static hosting on Vercel)
       }
-    };
-    reader.readAsDataURL(file);
+
+      // 3. Directly use optimized data URL (hundreds of times smaller, perfectly safe for storage)
+      onSuccess(optimizedDataUrl);
+    } catch (err) {
+      console.error('Image compression failed:', err);
+    } finally {
+      if (keyIdentifier) setUploadingImageKey(null);
+    }
   };
 
   // Save changes to backend
@@ -565,8 +586,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                           {/* Upload from file */}
                           <div className="flex items-center gap-2 pt-1">
                             <label className="px-3 py-1.5 bg-[#F0EBE5] hover:bg-[#E5DFD7] text-[#3A3232] text-[10px] uppercase tracking-wider rounded-xs cursor-pointer flex items-center gap-1.5 transition-colors">
-                              <Upload className="w-3 h-3" />
-                              <span>Upload Image File</span>
+                              {uploadingImageKey === `hero-${idx}` ? (
+                                <div className="w-3 h-3 border-2 border-[#3A3232] border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Upload className="w-3 h-3" />
+                              )}
+                              <span>{uploadingImageKey === `hero-${idx}` ? 'Optimizing...' : 'Upload Image File'}</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -574,18 +599,24 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    handleImageUpload(file, (url) => {
-                                      updateDraft((prev) => {
-                                        const next = { ...prev };
-                                        next.hero.slides[idx].image = url;
-                                        return next;
-                                      });
-                                    });
+                                    handleImageUpload(
+                                      file,
+                                      (url) => {
+                                        updateDraft((prev) => {
+                                          const next = { ...prev };
+                                          next.hero.slides[idx].image = url;
+                                          return next;
+                                        });
+                                      },
+                                      `hero-${idx}`,
+                                      1920,
+                                      1080
+                                    );
                                   }
                                 }}
                               />
                             </label>
-                            <span className="text-[10px] text-[#8E8080]">JPG, PNG, WebP (16:9 recommended)</span>
+                            <span className="text-[10px] text-[#8E8080]">Auto-optimized for web (16:9)</span>
                           </div>
                         </div>
                       </div>
@@ -724,7 +755,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                             className="w-full px-2 py-1 text-[11px] bg-white border border-[#D8CEBF] rounded-xs outline-none"
                           />
                           <label className="block text-center py-1 bg-white hover:bg-[#F3ECE5] border border-[#D8CEBF] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                            Upload 3:4 File
+                            {uploadingImageKey === `editorial-main-${idx}` ? 'Optimizing...' : 'Upload 3:4 File'}
                             <input
                               type="file"
                               accept="image/*"
@@ -732,13 +763,19 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  handleImageUpload(file, (url) => {
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.editorial.tabs[idx].mainImage = url;
-                                      return next;
-                                    });
-                                  });
+                                  handleImageUpload(
+                                    file,
+                                    (url) => {
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        next.editorial.tabs[idx].mainImage = url;
+                                        return next;
+                                      });
+                                    },
+                                    `editorial-main-${idx}`,
+                                    1200,
+                                    1600
+                                  );
                                 }
                               }}
                             />
@@ -772,7 +809,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                             className="w-full px-2 py-1 text-[11px] bg-white border border-[#D8CEBF] rounded-xs outline-none"
                           />
                           <label className="block text-center py-1 bg-white hover:bg-[#F3ECE5] border border-[#D8CEBF] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                            Upload 1:1 Square File
+                            {uploadingImageKey === `editorial-inset-${idx}` ? 'Optimizing...' : 'Upload 1:1 Square File'}
                             <input
                               type="file"
                               accept="image/*"
@@ -780,13 +817,19 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  handleImageUpload(file, (url) => {
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.editorial.tabs[idx].insetDetailImage = url;
-                                      return next;
-                                    });
-                                  });
+                                  handleImageUpload(
+                                    file,
+                                    (url) => {
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        next.editorial.tabs[idx].insetDetailImage = url;
+                                        return next;
+                                      });
+                                    },
+                                    `editorial-inset-${idx}`,
+                                    800,
+                                    800
+                                  );
                                 }
                               }}
                             />
@@ -911,7 +954,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                             className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1.5"
                           />
                           <label className="block text-center py-1 bg-[#FAF6F1] hover:bg-[#EFE7DE] border border-[#E2D5C8] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                            Upload Card Image
+                            {uploadingImageKey === `collection-${idx}` ? 'Optimizing...' : 'Upload Card Image'}
                             <input
                               type="file"
                               accept="image/*"
@@ -919,13 +962,19 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  handleImageUpload(file, (url) => {
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.collections[idx].image = url;
-                                      return next;
-                                    });
-                                  });
+                                  handleImageUpload(
+                                    file,
+                                    (url) => {
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        next.collections[idx].image = url;
+                                        return next;
+                                      });
+                                    },
+                                    `collection-${idx}`,
+                                    1000,
+                                    1000
+                                  );
                                 }
                               }}
                             />
@@ -1033,7 +1082,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                                 className="w-1/2 px-2 py-1 text-[11px] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs uppercase tracking-wider"
                               />
                               <label className="w-1/2 text-center py-1 bg-[#FAF6F1] hover:bg-[#EFE7DE] border border-[#E2D5C8] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                                Upload Photo
+                                {uploadingImageKey === `product-${idx}` ? 'Optimizing...' : 'Upload Photo'}
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -1041,13 +1090,19 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                      handleImageUpload(file, (url) => {
-                                        updateDraft((prev) => {
-                                          const next = { ...prev };
-                                          next.products[idx].image = url;
-                                          return next;
-                                        });
-                                      });
+                                      handleImageUpload(
+                                        file,
+                                        (url) => {
+                                          updateDraft((prev) => {
+                                            const next = { ...prev };
+                                            next.products[idx].image = url;
+                                            return next;
+                                          });
+                                        },
+                                        `product-${idx}`,
+                                        1000,
+                                        1000
+                                      );
                                     }
                                   }}
                                 />

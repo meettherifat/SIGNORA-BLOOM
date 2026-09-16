@@ -15,7 +15,14 @@ export const Hero: React.FC<HeroProps> = () => {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Map slide images to bundled fallback if default relative path
+  // Default template asset paths to pair with bundled images
+  const defaultAssetPaths = [
+    '/assets/images/jewelry_hero_clean_1_1789492829951.jpg',
+    '/assets/images/jewelry_hero_clean_2_1789492847429.jpg',
+    '/assets/images/jewelry_hero_clean_3_1789492876099.jpg',
+  ];
+
+  // Map slide images to bundled fallback if default template path or empty
   const rawSlides = content?.hero?.slides && content.hero.slides.length > 0
     ? content.hero.slides
     : [
@@ -26,7 +33,7 @@ export const Hero: React.FC<HeroProps> = () => {
 
   const slides = rawSlides.map((slide, idx) => {
     let finalImg = slide.image;
-    if (slide.image.startsWith('/assets/')) {
+    if (!finalImg || defaultAssetPaths.includes(finalImg)) {
       finalImg = idx === 0 ? slide1Img : idx === 1 ? slide2Img : slide3Img;
     }
     return {
@@ -116,6 +123,7 @@ export const Hero: React.FC<HeroProps> = () => {
               }`}
             >
               <img
+                key={slide.image}
                 src={slide.image}
                 alt={slide.alt}
                 className="w-full h-full object-cover sm:object-cover object-center select-none"

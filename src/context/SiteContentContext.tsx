@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '../siteContent';
 import { safeParseResponseJson } from '../utils/security';
+import { loadContentFromIndexedDb, saveContentToIndexedDb } from '../utils/storageDb';
 
 interface SiteContentContextType {
   content: SiteContent;
@@ -27,21 +28,33 @@ function mergeWithDefaults(custom: any): SiteContent {
     hero: {
       ...DEFAULT_SITE_CONTENT.hero,
       ...(custom.hero || {}),
-      slides: custom?.hero?.slides?.length ? custom.hero.slides : DEFAULT_SITE_CONTENT.hero.slides,
+      slides: Array.isArray(custom?.hero?.slides) && custom.hero.slides.length > 0
+        ? custom.hero.slides
+        : DEFAULT_SITE_CONTENT.hero.slides,
     },
-    collections: custom?.collections?.length ? custom.collections : DEFAULT_SITE_CONTENT.collections,
+    collections: Array.isArray(custom?.collections) && custom.collections.length > 0
+      ? custom.collections
+      : DEFAULT_SITE_CONTENT.collections,
     editorial: {
       ...DEFAULT_SITE_CONTENT.editorial,
       ...(custom.editorial || {}),
-      tabs: custom?.editorial?.tabs?.length ? custom.editorial.tabs : DEFAULT_SITE_CONTENT.editorial.tabs,
+      tabs: Array.isArray(custom?.editorial?.tabs) && custom.editorial.tabs.length > 0
+        ? custom.editorial.tabs
+        : DEFAULT_SITE_CONTENT.editorial.tabs,
     },
     giftSection: {
       ...DEFAULT_SITE_CONTENT.giftSection,
       ...(custom.giftSection || {}),
-      perks: custom?.giftSection?.perks?.length ? custom.giftSection.perks : DEFAULT_SITE_CONTENT.giftSection.perks,
-      features: custom?.giftSection?.features?.length ? custom.giftSection.features : DEFAULT_SITE_CONTENT.giftSection.features,
+      perks: Array.isArray(custom?.giftSection?.perks) && custom.giftSection.perks.length > 0
+        ? custom.giftSection.perks
+        : DEFAULT_SITE_CONTENT.giftSection.perks,
+      features: Array.isArray(custom?.giftSection?.features) && custom.giftSection.features.length > 0
+        ? custom.giftSection.features
+        : DEFAULT_SITE_CONTENT.giftSection.features,
     },
-    products: custom?.products?.length ? custom.products : DEFAULT_SITE_CONTENT.products,
+    products: Array.isArray(custom?.products) && custom.products.length > 0
+      ? custom.products
+      : DEFAULT_SITE_CONTENT.products,
     footer: { ...DEFAULT_SITE_CONTENT.footer, ...(custom.footer || {}) },
   };
 }
@@ -66,6 +79,27 @@ function loadInitialLocalContent(): SiteContent {
 export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(() => loadInitialLocalContent());
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load from IndexedDB on startup (handles large multi-image datasets without 5MB quota restrictions)
+  useEffect(() => {
+    let isMounted = true;
+    loadContentFromIndexedDb().then((idbContent) => {
+      if (isMounted && idbContent) {
+        const merged = mergeWithDefaults(idbContent);
+        setContent(merged);
+        try {
+          for (const key of STORAGE_KEYS) {
+            localStorage.setItem(key, JSON.stringify(merged));
+          }
+        } catch {
+          // localStorage quota exceeded is expected when multiple photos are uploaded
+        }
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Cross-tab real-time synchronization
   useEffect(() => {
@@ -96,14 +130,20 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
         
         const data = await safeParseResponseJson(res);
         if (data && data.success && data.content && isMounted) {
-          const merged = mergeWithDefaults(data.content);
-          setContent(merged);
-          try {
-            for (const key of STORAGE_KEYS) {
-              localStorage.setItem(key, JSON.stringify(merged));
-            }
-          } catch {
-            // Ignore quota errors
+          // Only update from server if server actually has custom data
+          if (data.source === 'custom' && data.content && Object.keys(data.content).length > 0) {
+            setContent((prev) => {
+              const merged = mergeWithDefaults({ ...prev, ...data.content });
+              try {
+                for (const key of STORAGE_KEYS) {
+                  localStorage.setItem(key, JSON.stringify(merged));
+                }
+              } catch {
+                // Ignore quota errors
+              }
+              saveContentToIndexedDb(merged);
+              return merged;
+            });
           }
         }
       } catch (err) {
@@ -120,20 +160,31 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const updateContent = (newContent: SiteContent) => {
     setContent(newContent);
+    // Persist to IndexedDB immediately
+    saveContentToIndexedDb(newContent);
+    try {
+      for (const key of STORAGE_KEYS) {
+        localStorage.setItem(key, JSON.stringify(newContent));
+      }
+    } catch {
+      // Ignore quota errors for localStorage
+    }
   };
 
   const saveContentToServer = async (
     newContent: SiteContent,
     token: string
   ): Promise<{ success: boolean; message: string }> => {
-    // 1. Immediately persist locally in React state and localStorage across keys
+    // 1. Immediately persist locally in React state, IndexedDB (unlimited), and localStorage
     setContent(newContent);
+    await saveContentToIndexedDb(newContent);
+
     try {
       for (const key of STORAGE_KEYS) {
         localStorage.setItem(key, JSON.stringify(newContent));
       }
     } catch (storageErr) {
-      console.warn('Could not write to localStorage:', storageErr);
+      console.warn('Local storage quota reached. Preserved safely in IndexedDB:', storageErr);
     }
 
     // 2. Attempt to synchronize with server
@@ -173,6 +224,7 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const resetContentOnServer = async (token: string): Promise<{ success: boolean; message: string }> => {
     // 1. Immediately reset state and purge local storage
     setContent(DEFAULT_SITE_CONTENT);
+    saveContentToIndexedDb(DEFAULT_SITE_CONTENT);
     try {
       for (const key of STORAGE_KEYS) {
         localStorage.removeItem(key);
