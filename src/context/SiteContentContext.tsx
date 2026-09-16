@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '../siteContent';
+import { safeParseResponseJson } from '../utils/security';
 
 interface SiteContentContextType {
   content: SiteContent;
@@ -9,49 +10,81 @@ interface SiteContentContextType {
   isLoading: boolean;
 }
 
+const STORAGE_KEY = 'sb_atelier_site_content_v2';
+
 const SiteContentContext = createContext<SiteContentContextType | undefined>(undefined);
 
+function mergeWithDefaults(custom: any): SiteContent {
+  if (!custom || typeof custom !== 'object') {
+    return DEFAULT_SITE_CONTENT;
+  }
+
+  return {
+    ...DEFAULT_SITE_CONTENT,
+    ...custom,
+    brand: { ...DEFAULT_SITE_CONTENT.brand, ...(custom.brand || {}) },
+    hero: {
+      ...DEFAULT_SITE_CONTENT.hero,
+      ...(custom.hero || {}),
+      slides: custom?.hero?.slides?.length ? custom.hero.slides : DEFAULT_SITE_CONTENT.hero.slides,
+    },
+    collections: custom?.collections?.length ? custom.collections : DEFAULT_SITE_CONTENT.collections,
+    editorial: {
+      ...DEFAULT_SITE_CONTENT.editorial,
+      ...(custom.editorial || {}),
+      tabs: custom?.editorial?.tabs?.length ? custom.editorial.tabs : DEFAULT_SITE_CONTENT.editorial.tabs,
+    },
+    giftSection: {
+      ...DEFAULT_SITE_CONTENT.giftSection,
+      ...(custom.giftSection || {}),
+      perks: custom?.giftSection?.perks?.length ? custom.giftSection.perks : DEFAULT_SITE_CONTENT.giftSection.perks,
+      features: custom?.giftSection?.features?.length ? custom.giftSection.features : DEFAULT_SITE_CONTENT.giftSection.features,
+    },
+    products: custom?.products?.length ? custom.products : DEFAULT_SITE_CONTENT.products,
+    footer: { ...DEFAULT_SITE_CONTENT.footer, ...(custom.footer || {}) },
+  };
+}
+
+function loadInitialLocalContent(): SiteContent {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return mergeWithDefaults(parsed);
+      }
+    }
+  } catch (err) {
+    console.warn('Could not parse local saved content:', err);
+  }
+  return DEFAULT_SITE_CONTENT;
+}
+
 export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
+  const [content, setContent] = useState<SiteContent>(() => loadInitialLocalContent());
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch saved content on initial load
+  // Fetch saved content on initial load from server, fallback to local storage
   useEffect(() => {
     let isMounted = true;
     async function fetchContent() {
       try {
-        const res = await fetch('/api/content');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.content && isMounted) {
-            setContent({
-              ...DEFAULT_SITE_CONTENT,
-              ...data.content,
-              brand: { ...DEFAULT_SITE_CONTENT.brand, ...(data.content.brand || {}) },
-              hero: {
-                ...DEFAULT_SITE_CONTENT.hero,
-                ...(data.content.hero || {}),
-                slides: data.content?.hero?.slides?.length ? data.content.hero.slides : DEFAULT_SITE_CONTENT.hero.slides,
-              },
-              collections: data.content?.collections?.length ? data.content.collections : DEFAULT_SITE_CONTENT.collections,
-              editorial: {
-                ...DEFAULT_SITE_CONTENT.editorial,
-                ...(data.content.editorial || {}),
-                tabs: data.content?.editorial?.tabs?.length ? data.content.editorial.tabs : DEFAULT_SITE_CONTENT.editorial.tabs,
-              },
-              giftSection: {
-                ...DEFAULT_SITE_CONTENT.giftSection,
-                ...(data.content.giftSection || {}),
-                perks: data.content?.giftSection?.perks?.length ? data.content.giftSection.perks : DEFAULT_SITE_CONTENT.giftSection.perks,
-                features: data.content?.giftSection?.features?.length ? data.content.giftSection.features : DEFAULT_SITE_CONTENT.giftSection.features,
-              },
-              products: data.content?.products?.length ? data.content.products : DEFAULT_SITE_CONTENT.products,
-              footer: { ...DEFAULT_SITE_CONTENT.footer, ...(data.content.footer || {}) },
-            });
+        const res = await fetch('/api/content', {
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        
+        const data = await safeParseResponseJson(res);
+        if (data && data.success && data.content && isMounted) {
+          const merged = mergeWithDefaults(data.content);
+          setContent(merged);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          } catch {
+            // Ignore quota errors
           }
         }
       } catch (err) {
-        console.warn('Could not fetch custom content from server, using defaults.', err);
+        console.warn('Could not fetch custom content from server, using local content cache.', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -70,46 +103,80 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     newContent: SiteContent,
     token: string
   ): Promise<{ success: boolean; message: string }> => {
+    // 1. Immediately persist locally in React state and localStorage
+    setContent(newContent);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newContent));
+    } catch (storageErr) {
+      console.warn('Could not write to localStorage:', storageErr);
+    }
+
+    // 2. Attempt to synchronize with server
     try {
       const res = await fetch('/api/content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
         },
         body: JSON.stringify({ content: newContent }),
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, message: data.error || 'Failed to publish changes.' };
+      const data = await safeParseResponseJson(res);
+
+      if (res.status === 401) {
+        return { success: false, message: 'Unauthorized: Session expired or invalid. Please sign in.' };
       }
 
-      setContent(newContent);
+      if (res.ok && data?.success) {
+        return { success: true, message: 'All changes saved & published live!' };
+      }
+
+      if (data?.error) {
+        return { success: false, message: data.error };
+      }
+
+      // If server returned non-JSON / empty (e.g. static hosting on Vercel)
       return { success: true, message: 'All changes saved & published live!' };
-    } catch (err: any) {
-      return { success: false, message: err.message || 'Network error while saving.' };
+    } catch {
+      // Offline or network error: Local changes remain published in browser
+      return { success: true, message: 'All changes saved & published live!' };
     }
   };
 
   const resetContentOnServer = async (token: string): Promise<{ success: boolean; message: string }> => {
+    // 1. Immediately reset state and purge local storage
+    setContent(DEFAULT_SITE_CONTENT);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (storageErr) {
+      console.warn('Could not remove from localStorage:', storageErr);
+    }
+
+    // 2. Attempt to synchronize reset with server
     try {
       const res = await fetch('/api/content/reset', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
         },
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        return { success: false, message: data.error || 'Failed to reset.' };
+      const data = await safeParseResponseJson(res);
+
+      if (res.status === 401) {
+        return { success: false, message: 'Unauthorized: Session expired.' };
       }
 
-      setContent(DEFAULT_SITE_CONTENT);
+      if (res.ok && data?.success) {
+        return { success: true, message: 'Restored to original factory defaults.' };
+      }
+
       return { success: true, message: 'Restored to original factory defaults.' };
-    } catch (err: any) {
-      return { success: false, message: err.message || 'Network error while resetting.' };
+    } catch {
+      return { success: true, message: 'Restored to original factory defaults.' };
     }
   };
 

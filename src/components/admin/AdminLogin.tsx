@@ -6,6 +6,7 @@ import {
   resetLoginRateLimit,
   storeHardenedSession,
   createSubmissionProof,
+  safeParseResponseJson,
 } from '../../utils/security';
 
 interface AdminLoginProps {
@@ -82,10 +83,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
         body: JSON.stringify({ id: cleanId, pass: password }),
       });
 
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await res.json();
-
+      const data = await safeParseResponseJson(res);
+      if (data) {
         if (!res.ok) {
           // Record failed attempt in client-side rate limiter
           const limitRes = recordFailedLoginAttempt();

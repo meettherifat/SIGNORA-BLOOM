@@ -338,3 +338,19 @@ export async function createSubmissionProof(adminId: string): Promise<string> {
   const digest = await sha256Hex(`${adminId}:${ts}:${nonce}:atelier_anti_tamper_salt`);
   return `${ts}.${nonce}.${digest}`;
 }
+
+/**
+ * Safely parses fetch Response JSON without throwing "Unexpected end of JSON input"
+ * or "Unexpected token '<'". Returns null if body is empty or not valid JSON.
+ */
+export async function safeParseResponseJson(res: Response): Promise<any> {
+  try {
+    const text = await res.text();
+    if (!text || !text.trim()) {
+      return null;
+    }
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}

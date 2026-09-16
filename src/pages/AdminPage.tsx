@@ -7,6 +7,7 @@ import {
   storeHardenedSession,
   decodeJwtPayload,
   isJwtValid,
+  safeParseResponseJson,
 } from '../utils/security';
 
 interface AdminPageProps {
@@ -95,9 +96,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigateHome }) => {
 
         if (!isSubscribed) return;
 
-        const contentType = res.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          const data = await res.json();
+        const data = await safeParseResponseJson(res);
+        if (data) {
           if (res.ok && data.valid) {
             setToken(activeToken);
             setUser(data.user || sessionResult.user || { id: 'admin', role: 'SUPER_ADMIN' });

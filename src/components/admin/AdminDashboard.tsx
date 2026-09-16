@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { SiteContent } from '../../siteContent';
 import { useSiteContent } from '../../context/SiteContentContext';
+import { safeParseResponseJson } from '../../utils/security';
 
 // Import public components for the real-time live preview
 import { Header } from '../Header';
@@ -101,8 +102,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onSessionExpired?.();
           return;
         }
-        const data = await res.json();
-        if (data.success && data.url) {
+        const data = await safeParseResponseJson(res);
+        if (data && data.success && data.url) {
           onSuccess(data.url);
         } else {
           // Fallback to inline data URL if upload failed
