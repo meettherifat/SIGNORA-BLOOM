@@ -198,6 +198,9 @@ export function mergeSiteContent(base: SiteContent, custom: any): SiteContent {
         ? custom.giftSection.features
         : baseGift.features,
     },
+    everydayElegance: {
+      title: custom?.everydayElegance?.title || base.everydayElegance?.title || DEFAULT_SITE_CONTENT.everydayElegance?.title || 'Everyday Elegance',
+    },
     products: mergeProducts(baseProducts, custom?.products),
     footer: {
       ...baseFooter,

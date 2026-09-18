@@ -11,9 +11,6 @@ import {
   Columns,
   CheckCircle2,
   AlertTriangle,
-  Upload,
-  Plus,
-  Trash2,
   Image as ImageIcon,
   Layers,
   Sparkles,
@@ -52,14 +49,42 @@ interface AdminDashboardProps {
   onViewPublicSite: () => void;
 }
 
-type TabKey = 'hero' | 'editorial' | 'collections' | 'products' | 'gift' | 'brand';
+type TabKey = 'hero' | 'collections' | 'elegance' | 'editorial' | 'gift';
 type ViewMode = 'edit' | 'split' | 'preview';
 type DeviceMode = 'mobile' | 'tablet' | 'desktop';
 
-// Helper ensuring all 5 collections are always present with no missing positions
+const defaultFeatures = [
+  { number: '01', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
+  { number: '02', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
+  { number: '03', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
+  { number: '04', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
+];
+
+// Helper ensuring all 5 collections, 4 features, and everyday elegance are always present with no missing positions
 const normalizeDraftContent = (rawContent: SiteContent): SiteContent => {
   const cloned: SiteContent = JSON.parse(JSON.stringify(rawContent || DEFAULT_SITE_CONTENT));
   cloned.collections = mergeCollections(DEFAULT_SITE_CONTENT.collections, cloned.collections || []);
+  if (!cloned.giftSection) {
+    cloned.giftSection = { ...DEFAULT_SITE_CONTENT.giftSection };
+  }
+  if (!Array.isArray(cloned.giftSection.features) || cloned.giftSection.features.length === 0) {
+    cloned.giftSection.features = defaultFeatures.map((f) => ({ ...f }));
+  } else {
+    cloned.giftSection.features = [0, 1, 2, 3].map((idx) => {
+      const existing = cloned.giftSection.features[idx];
+      const fallback = defaultFeatures[idx];
+      return {
+        number: existing?.number || fallback.number,
+        title: existing?.title || fallback.title,
+        description: existing?.description || fallback.description,
+      };
+    });
+  }
+  if (!cloned.everydayElegance) {
+    cloned.everydayElegance = {
+      title: 'Everyday Elegance',
+    };
+  }
   return cloned;
 };
 
@@ -296,6 +321,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     perks: { title: string; desc: string }[];
     features: { number: string; title: string; description: string }[];
   };
+  everydayElegance?: {
+    title: string;
+  };
   products: {
     id: string;
     refCode: string;
@@ -344,10 +372,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F3EE] text-[#2A2323]">
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-[#F7F3EE] text-[#2A2323]">
       
       {/* 1. TOP EXECUTIVE APP BAR */}
-      <header className="sticky top-0 z-50 bg-[#FFFFFF] border-b border-[#EADFD5] shadow-[0_2px_12px_rgba(42,35,35,0.05)] px-4 sm:px-6 py-3">
+      <header className="shrink-0 z-50 bg-[#FFFFFF] border-b border-[#EADFD5] shadow-[0_2px_12px_rgba(42,35,35,0.05)] px-4 sm:px-6 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           
           {/* Brand Logo & CMS Title */}
@@ -657,30 +685,29 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
       </header>
 
       {/* 2. MAIN CMS WORKSPACE (Split or Full Screen) */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         
         {/* LEFT COLUMN: EDIT CONTROLS FORM (Rendered when viewMode is 'edit' or 'split') */}
         {(viewMode === 'edit' || viewMode === 'split') && (
           <div
             className={`${
               viewMode === 'split' ? 'w-full lg:w-1/2 border-r border-[#EADFD5]' : 'w-full max-w-5xl mx-auto'
-            } flex flex-col bg-[#FAF7F3] overflow-y-auto`}
+            } flex flex-col bg-[#FAF7F3] h-full min-h-0 overflow-hidden`}
           >
             {/* Navigation Tabs */}
-            <div className="sticky top-0 z-20 bg-[#FAF7F3] border-b border-[#E8DFD5] px-4 sm:px-6 pt-3 pb-1 flex flex-wrap gap-2 sm:gap-3">
+            <div className="shrink-0 bg-[#FAF7F3] border-b border-[#E8DFD5] px-4 sm:px-6 pt-3 pb-2 flex flex-wrap gap-2 sm:gap-2.5 z-10">
               {[
                 { key: 'hero', label: 'Hero Slider', icon: ImageIcon },
+                { key: 'collections', label: 'Category Mosaic', icon: Sparkles },
+                { key: 'elegance', label: 'Everyday Elegance', icon: ShoppingBag },
                 { key: 'editorial', label: 'Editorial Tabs', icon: Layers },
-                { key: 'collections', label: 'Collections', icon: Sparkles },
-                { key: 'products', label: 'Products', icon: ShoppingBag },
-                { key: 'gift', label: 'Gift Packaging', icon: Gift },
-                { key: 'brand', label: 'Brand & Contact', icon: Info },
+                { key: 'gift', label: 'Surprise A Loved One', icon: Gift },
               ].map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setActiveTab(key as TabKey)}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-[10px] sm:text-[11px] uppercase tracking-wider transition-all rounded-xs cursor-pointer border ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-[11px] uppercase tracking-wider transition-all rounded-xs cursor-pointer border ${
                     activeTab === key
                       ? 'bg-[#2A2323] text-white border-[#2A2323] font-medium shadow-xs'
                       : 'bg-white text-[#6E6060] border-[#E5DAD0] hover:text-[#2A2323] hover:border-[#CDC0B5]'
@@ -693,7 +720,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
             </div>
 
             {/* Form Panels based on activeTab */}
-            <div className="p-4 sm:p-6 space-y-6 pb-24">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6 pb-28">
               
               {/* TAB 1: HERO SLIDER */}
               {activeTab === 'hero' && (
@@ -702,7 +729,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                     <div>
                       <h2 className="font-serif text-xl text-[#2A2323]">Hero Banner Slider</h2>
                       <p className="text-xs text-[#7A6C6C]">
-                        16:9 full-width slides. Updates are merged without overwriting sibling slides.
+                        16:9 full-width photographic slides matching the homepage slider.
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -732,7 +759,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[10px] text-[#A66F42] bg-[#FDF6F0] border border-[#EED7C5] px-2 py-0.5 rounded-xs font-medium">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#D4823A] animate-pulse" />
-                                Draft Changed (Click Save to verify)
+                                Draft Changed
                               </span>
                             )}
                           </div>
@@ -765,38 +792,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                           defaultUrl={DEFAULT_SITE_CONTENT.hero.slides[idx]?.image}
                           isLiveSynced={isSyncedWithLive}
                         />
-
-                        {/* Headline & Button Text */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                              Slide Headline
-                            </label>
-                            <input
-                              type="text"
-                              value={slide.headline || ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                updateHeroSlide(idx, { headline: val });
-                              }}
-                              className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                              Button Label
-                            </label>
-                            <input
-                              type="text"
-                              value={slide.buttonText || 'SHOP NOW'}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                updateHeroSlide(idx, { buttonText: val });
-                              }}
-                              className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
-                            />
-                          </div>
-                        </div>
 
                         {/* Alt Description */}
                         <div>
@@ -1077,47 +1072,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                               </span>
                             </div>
 
-                            {/* Card Titles & Item Count */}
-                            <div className="space-y-2">
-                              <div className="flex gap-2">
-                                <div className="w-2/3">
-                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
-                                    Card Title
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={col.title}
-                                    onChange={(e) => updateColItem(idx, { title: e.target.value })}
-                                    className="w-full px-2 py-1 text-xs font-semibold uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                                  />
-                                </div>
-                                <div className="w-1/3">
-                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
-                                    Count Tag
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={col.itemCount || ''}
-                                    onChange={(e) => updateColItem(idx, { itemCount: e.target.value })}
-                                    placeholder="24 Designs"
-                                    className="w-full px-2 py-1 text-[11px] text-[#7A6C6C] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                                  />
-                                </div>
-                              </div>
-
-                              <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
-                                  Subtitle
-                                </label>
-                                <input
-                                  type="text"
-                                  value={col.subtitle || ''}
-                                  onChange={(e) => updateColItem(idx, { subtitle: e.target.value })}
-                                  className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                                />
-                              </div>
-                            </div>
-
                             {/* Dedicated Image Update & Upload Control */}
                             <ImageUpdateField
                               id={`collection-img-${idx}`}
@@ -1140,6 +1094,20 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                               defaultUrl={defaultCol?.image}
                               isLiveSynced={isSynced}
                             />
+
+                            {/* Accessibility Description */}
+                            <div>
+                              <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                Accessibility Image Description (Alt Text)
+                              </label>
+                              <input
+                                type="text"
+                                value={col.title}
+                                onChange={(e) => updateColItem(idx, { title: e.target.value })}
+                                placeholder="e.g. Fine Rings Collection"
+                                className="w-full px-2.5 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                              />
+                            </div>
                           </div>
                         );
                       })}
@@ -1148,464 +1116,312 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                 );
               })()}
 
-              {/* TAB 4: EVERYDAY ELEGANCE PRODUCTS */}
-              {activeTab === 'products' && (
+              {/* TAB 3: EVERYDAY ELEGANCE */}
+              {activeTab === 'elegance' && (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#EADFD5]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-[#EADFD5] gap-2">
                     <div>
-                      <h2 className="font-serif text-xl text-[#2A2323]">Everyday Elegance Products</h2>
+                      <h2 className="font-serif text-xl text-[#2A2323]">Everyday Elegance</h2>
                       <p className="text-xs text-[#7A6C6C]">
-                        Edit piece names, reference codes, prices, images, badges, and craft notes.
+                        Edit the section title and the 4 clean 1:1 square jewelry still images displayed on the homepage.
                       </p>
                     </div>
+                    <span className="text-[10px] uppercase font-mono tracking-wider bg-[#FAF0E6] text-[#7A5229] px-2.5 py-1 rounded-xs border border-[#E8D4C0]">
+                      4 Pieces Active
+                    </span>
                   </div>
 
-                  <div className="space-y-4">
-                    {draft.products.map((prod, idx) => (
-                      <div
-                        key={prod.id}
-                        className="bg-white border border-[#E5DAD0] p-4 sm:p-5 rounded-xs shadow-xs space-y-4"
-                      >
-                        <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-2">
-                          <div className="flex items-center gap-2">
+                  {/* Section Title Input */}
+                  <div className="bg-white border border-[#E5DAD0] p-4 rounded-xs shadow-xs space-y-2">
+                    <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium">
+                      Section Title
+                    </label>
+                    <input
+                      type="text"
+                      value={draft.everydayElegance?.title || 'Everyday Elegance'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateDraft((prev) => ({
+                          ...prev,
+                          everydayElegance: {
+                            ...prev.everydayElegance,
+                            title: val,
+                          },
+                        }));
+                      }}
+                      placeholder="Everyday Elegance"
+                      className="w-full px-3 py-1.5 text-sm font-serif bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323]"
+                    />
+                  </div>
+
+                  {/* 4 Clean Square Photo Items */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {draft.products.slice(0, 4).map((prod, idx) => {
+                      const isSynced = content.products?.[idx]?.image === prod.image;
+                      return (
+                        <div
+                          key={prod.id || `elegance-${idx}`}
+                          className="bg-white border border-[#E5DAD0] p-4 rounded-xs shadow-xs space-y-3.5"
+                        >
+                          <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-1.5">
                             <span className="text-xs font-semibold text-[#8C6D4F] tracking-wider uppercase font-mono">
-                              {prod.refCode || `PIECE #${idx + 1}`}
+                              Piece #{idx + 1}
                             </span>
                             <span className="text-[10px] uppercase tracking-wider text-[#736565] bg-[#FAF5F0] border border-[#E8DFD5] px-2 py-0.5 rounded-xs">
-                              {prod.categoryLabel || prod.category}
+                              1:1 Square Still
                             </span>
                           </div>
-                          <span className="text-xs font-semibold text-[#2A2323]">
-                            {prod.price}
-                          </span>
-                        </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-                          {/* Left: Product Information Inputs */}
-                          <div className="lg:col-span-6 space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                              <div className="sm:col-span-8">
-                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                                  Product Name
-                                </label>
-                                <input
-                                  type="text"
-                                  value={prod.name}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.products[idx].name = val;
-                                      return next;
-                                    });
-                                  }}
-                                  placeholder="Product Name"
-                                  className="w-full px-2.5 py-1.5 text-xs font-serif font-medium bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                                />
-                              </div>
-
-                              <div className="sm:col-span-4">
-                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                                  Price
-                                </label>
-                                <input
-                                  type="text"
-                                  value={prod.price}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.products[idx].price = val;
-                                      return next;
-                                    });
-                                  }}
-                                  placeholder="$2,450"
-                                  className="w-full px-2.5 py-1.5 text-xs font-semibold bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs text-[#2A2323]"
-                                />
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                                Craft & Material Tagline
-                              </label>
-                              <input
-                                type="text"
-                                value={prod.tagline}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  updateDraft((prev) => {
-                                    const next = { ...prev };
-                                    next.products[idx].tagline = val;
-                                    return next;
-                                  });
-                                }}
-                                placeholder="e.g. 18k Fairmined Gold · 1.2ct F-VS Diamonds"
-                                className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs text-[#554949]"
-                              />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                                  Ref Code
-                                </label>
-                                <input
-                                  type="text"
-                                  value={prod.refCode}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.products[idx].refCode = val;
-                                      return next;
-                                    });
-                                  }}
-                                  className="w-full px-2.5 py-1.5 text-xs font-mono bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                                  Promo Badge (Optional)
-                                </label>
-                                <input
-                                  type="text"
-                                  value={prod.badge || ''}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.products[idx].badge = val;
-                                      return next;
-                                    });
-                                  }}
-                                  placeholder="e.g. -14%, NEW, ICONIC"
-                                  className="w-full px-2.5 py-1.5 text-xs uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Right: Standardized Image Update & Upload Control */}
-                          <div className="lg:col-span-6">
-                            <ImageUpdateField
-                              id={`product-img-${idx}`}
-                              label={`${prod.name || `Product ${idx + 1}`} Still Photo`}
-                              value={prod.image}
-                              onChange={(newUrl) => {
-                                updateDraft((prev) => {
-                                  const next = { ...prev };
-                                  next.products[idx].image = newUrl;
-                                  return next;
-                                });
-                              }}
-                              onUpload={(file) => {
-                                handleImageUpload(
-                                  file,
-                                  (url) => {
-                                    updateDraft((prev) => {
-                                      const next = { ...prev };
-                                      next.products[idx].image = url;
-                                      return next;
-                                    });
-                                  },
-                                  `product-${idx}`,
-                                  1000,
-                                  1000
-                                );
-                              }}
-                              isUploading={uploadingImageKey === `product-${idx}`}
-                              aspectRatio="1/1"
-                              aspectLabel="1:1 Square Still"
-                              recommendedDimensions="1000 × 1000px"
-                              defaultUrl={DEFAULT_SITE_CONTENT.products[idx]?.image}
-                              isLiveSynced={content.products?.[idx]?.image === prod.image}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 5: GIFT PACKAGING SECTION */}
-              {activeTab === 'gift' && (
-                <div className="space-y-6">
-                  <div className="pb-2 border-b border-[#EADFD5]">
-                    <h2 className="font-serif text-xl text-[#2A2323]">Surprise A Loved One (Gift Packaging)</h2>
-                    <p className="text-xs text-[#7A6C6C]">
-                      Customize the gift box headline, subheadline, 3 packaging perks, and box ribbon label.
-                    </p>
-                  </div>
-
-                  <div className="bg-white border border-[#E5DAD0] p-4 sm:p-5 rounded-xs space-y-4 shadow-xs">
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                        Top Eyebrow Badge
-                      </label>
-                      <input
-                        type="text"
-                        value={draft.giftSection.badge}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            giftSection: { ...prev.giftSection, badge: val },
-                          }));
-                        }}
-                        className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Headline
-                        </label>
-                        <input
-                          type="text"
-                          value={draft.giftSection.headline}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              giftSection: { ...prev.giftSection, headline: val },
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Box Ribbon Brand Label
-                        </label>
-                        <input
-                          type="text"
-                          value={draft.giftSection.boxLabel}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              giftSection: { ...prev.giftSection, boxLabel: val },
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                        Subheadline Narrative
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={draft.giftSection.subheadline}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            giftSection: { ...prev.giftSection, subheadline: val },
-                          }));
-                        }}
-                        className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                      />
-                    </div>
-
-                    {/* 3 Packaging Perks */}
-                    <div className="pt-2 border-t border-[#F0EBE5] space-y-3">
-                      <span className="text-xs uppercase tracking-wider font-semibold text-[#2A2323]">
-                        3 Signature Packaging Perks
-                      </span>
-                      {(draft.giftSection.perks || []).map((perk, pIdx) => (
-                        <div key={pIdx} className="p-3 bg-[#FAF8F5] border border-[#E8DFD5] rounded-xs space-y-2">
-                          <input
-                            type="text"
-                            value={perk.title}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                if (!next.giftSection.perks) next.giftSection.perks = [];
-                                next.giftSection.perks[pIdx].title = val;
-                                return next;
-                              });
-                            }}
-                            placeholder="Perk Title"
-                            className="w-full px-2 py-1 text-xs font-medium bg-white border border-[#DCD0C2] rounded-xs"
-                          />
-                          <input
-                            type="text"
-                            value={perk.desc}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                if (!next.giftSection.perks) next.giftSection.perks = [];
-                                next.giftSection.perks[pIdx].desc = val;
-                                return next;
-                              });
-                            }}
-                            placeholder="Perk Description"
-                            className="w-full px-2 py-1 text-[11px] text-[#665959] bg-white border border-[#DCD0C2] rounded-xs"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* 4 Numbered Features Flanking Gift Box */}
-                    <div className="pt-4 border-t border-[#F0EBE5] space-y-3">
-                      <span className="text-xs uppercase tracking-wider font-semibold text-[#2A2323]">
-                        4 Numbered Box Features (01, 02, 03, 04)
-                      </span>
-                      {(draft.giftSection.features || []).map((feat, fIdx) => (
-                        <div key={fIdx} className="p-3 bg-[#FAF8F5] border border-[#E8DFD5] rounded-xs space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-serif font-semibold text-[#826D5C] px-2 py-0.5 bg-white border border-[#DCD0C2] rounded-xs">
-                              {feat.number}
-                            </span>
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                              Piece Name / Alt Text
+                            </label>
                             <input
                               type="text"
-                              value={feat.title}
+                              value={prod.name}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 updateDraft((prev) => {
                                   const next = { ...prev };
-                                  if (!next.giftSection.features) next.giftSection.features = [];
-                                  next.giftSection.features[fIdx].title = val;
+                                  next.products[idx].name = val;
                                   return next;
                                 });
                               }}
-                              placeholder="Feature Title (e.g. Viverra venenatis donec)"
-                              className="w-full px-2 py-1 text-xs font-medium bg-white border border-[#DCD0C2] rounded-xs"
+                              placeholder="e.g. Aurelia Pavé Diamond Ring"
+                              className="w-full px-2.5 py-1.5 text-xs font-medium bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
                             />
                           </div>
-                          <input
-                            type="text"
-                            value={feat.description}
-                            onChange={(e) => {
-                              const val = e.target.value;
+
+                          <ImageUpdateField
+                            id={`elegance-prod-img-${idx}`}
+                            label={`Piece ${idx + 1} Image`}
+                            value={prod.image}
+                            onChange={(newUrl) => {
                               updateDraft((prev) => {
                                 const next = { ...prev };
-                                if (!next.giftSection.features) next.giftSection.features = [];
-                                next.giftSection.features[fIdx].description = val;
+                                next.products[idx].image = newUrl;
                                 return next;
                               });
                             }}
-                            placeholder="Feature Description"
-                            className="w-full px-2 py-1 text-[11px] text-[#665959] bg-white border border-[#DCD0C2] rounded-xs"
+                            onUpload={(file) => {
+                              handleImageUpload(
+                                file,
+                                (url) => {
+                                  updateDraft((prev) => {
+                                    const next = { ...prev };
+                                    next.products[idx].image = url;
+                                    return next;
+                                  });
+                                },
+                                `product-${idx}`,
+                                1000,
+                                1000
+                              );
+                            }}
+                            isUploading={uploadingImageKey === `product-${idx}`}
+                            aspectRatio="1/1"
+                            aspectLabel="1:1 Square Still"
+                            recommendedDimensions="1000 × 1000px"
+                            defaultUrl={DEFAULT_SITE_CONTENT.products[idx]?.image}
+                            isLiveSynced={isSynced}
                           />
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* TAB 6: BRAND & CONTACT */}
-              {activeTab === 'brand' && (
+              {/* TAB 5: SURPRISE A LOVED ONE */}
+              {activeTab === 'gift' && (
                 <div className="space-y-6">
-                  <div className="pb-2 border-b border-[#EADFD5]">
-                    <h2 className="font-serif text-xl text-[#2A2323]">Brand & Concierge Settings</h2>
-                    <p className="text-xs text-[#7A6C6C]">
-                      Update the luxury house name, boutique contact numbers, emails, and operating hours.
-                    </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-[#EADFD5] gap-2">
+                    <div>
+                      <h2 className="font-serif text-xl text-[#2A2323]">Surprise A Loved One</h2>
+                      <p className="text-xs text-[#7A6C6C]">
+                        Edit the section headline and the 4 numbered points (01, 02, 03, 04) flanking the gift box on the homepage.
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="bg-white border border-[#E5DAD0] p-4 sm:p-5 rounded-xs space-y-4 shadow-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Maison Name
-                        </label>
-                        <input
-                          type="text"
-                          value={draft.brand.name}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              brand: { ...prev.brand, name: val },
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs font-serif"
-                        />
-                      </div>
+                  {/* Section Headline */}
+                  <div className="bg-white border border-[#E5DAD0] p-4 rounded-xs shadow-xs space-y-2">
+                    <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium">
+                      Section Headline
+                    </label>
+                    <input
+                      type="text"
+                      value={draft.giftSection.headline}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateDraft((prev) => ({
+                          ...prev,
+                          giftSection: { ...prev.giftSection, headline: val },
+                        }));
+                      }}
+                      placeholder="SURPRISE A LOVED ONE"
+                      className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs font-serif font-medium"
+                    />
+                  </div>
 
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Concierge Phone
-                        </label>
-                        <input
-                          type="text"
-                          value={draft.brand.phone}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              brand: { ...prev.brand, phone: val },
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Concierge Email
-                        </label>
-                        <input
-                          type="email"
-                          value={draft.brand.email}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              brand: { ...prev.brand, email: val },
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Concierge Operating Hours
-                        </label>
-                        <input
-                          type="text"
-                          value={draft.brand.conciergeHours}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => ({
-                              ...prev,
-                              brand: { ...prev.brand, conciergeHours: val },
-                            }));
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                        />
-                      </div>
+                  {/* 4 Numbered Features Flanking Gift Box */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#E8DFD5]">
+                      <span className="text-xs uppercase tracking-wider font-semibold text-[#2A2323]">
+                        4 Numbered Points Under Numbers (01, 02, 03, 04)
+                      </span>
                     </div>
 
-                    <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                        Boutique Addresses
-                      </label>
-                      <input
-                        type="text"
-                        value={draft.brand.address}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateDraft((prev) => ({
-                            ...prev,
-                            brand: { ...prev.brand, address: val },
-                          }));
-                        }}
-                        className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Left Column Points (01 & 02) */}
+                      <div className="space-y-4">
+                        <div className="text-[11px] uppercase tracking-wider font-semibold text-[#8C6D4F] border-b border-[#E8DFD5] pb-1">
+                          Left Side Points (01 & 02)
+                        </div>
+                        {[0, 1].map((fIdx) => {
+                          const feat = draft.giftSection.features?.[fIdx] || defaultFeatures[fIdx];
+                          return (
+                            <div key={fIdx} className="bg-white border border-[#E5DAD0] p-4 rounded-xs shadow-xs space-y-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-1/4">
+                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                    Number
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={feat.number}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        if (!next.giftSection.features) next.giftSection.features = [...defaultFeatures];
+                                        next.giftSection.features[fIdx].number = val;
+                                        return next;
+                                      });
+                                    }}
+                                    className="w-full px-2.5 py-1.5 text-xs font-serif font-semibold bg-[#FAF8F5] border border-[#DCD0C2] rounded-xs text-center"
+                                  />
+                                </div>
+                                <div className="w-3/4">
+                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                    Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={feat.title}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        if (!next.giftSection.features) next.giftSection.features = [...defaultFeatures];
+                                        next.giftSection.features[fIdx].title = val;
+                                        return next;
+                                      });
+                                    }}
+                                    placeholder="e.g. Viverra venenatis donec"
+                                    className="w-full px-2.5 py-1.5 text-xs font-serif bg-[#FAF8F5] border border-[#DCD0C2] rounded-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                  Text Under Number (Description)
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={feat.description}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      if (!next.giftSection.features) next.giftSection.features = [...defaultFeatures];
+                                      next.giftSection.features[fIdx].description = val;
+                                      return next;
+                                    });
+                                  }}
+                                  placeholder="e.g. Vestibulum ante ipsum primis in faucibus orci luctus"
+                                  className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#DCD0C2] rounded-xs"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Right Column Points (03 & 04) */}
+                      <div className="space-y-4">
+                        <div className="text-[11px] uppercase tracking-wider font-semibold text-[#8C6D4F] border-b border-[#E8DFD5] pb-1">
+                          Right Side Points (03 & 04)
+                        </div>
+                        {[2, 3].map((fIdx) => {
+                          const feat = draft.giftSection.features?.[fIdx] || defaultFeatures[fIdx];
+                          return (
+                            <div key={fIdx} className="bg-white border border-[#E5DAD0] p-4 rounded-xs shadow-xs space-y-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-1/4">
+                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                    Number
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={feat.number}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        if (!next.giftSection.features) next.giftSection.features = [...defaultFeatures];
+                                        next.giftSection.features[fIdx].number = val;
+                                        return next;
+                                      });
+                                    }}
+                                    className="w-full px-2.5 py-1.5 text-xs font-serif font-semibold bg-[#FAF8F5] border border-[#DCD0C2] rounded-xs text-center"
+                                  />
+                                </div>
+                                <div className="w-3/4">
+                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                    Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={feat.title}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      updateDraft((prev) => {
+                                        const next = { ...prev };
+                                        if (!next.giftSection.features) next.giftSection.features = [...defaultFeatures];
+                                        next.giftSection.features[fIdx].title = val;
+                                        return next;
+                                      });
+                                    }}
+                                    placeholder="e.g. Viverra venenatis donec"
+                                    className="w-full px-2.5 py-1.5 text-xs font-serif bg-[#FAF8F5] border border-[#DCD0C2] rounded-xs"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                  Text Under Number (Description)
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={feat.description}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      if (!next.giftSection.features) next.giftSection.features = [...defaultFeatures];
+                                      next.giftSection.features[fIdx].description = val;
+                                      return next;
+                                    });
+                                  }}
+                                  placeholder="e.g. Vestibulum ante ipsum primis in faucibus orci luctus"
+                                  className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#DCD0C2] rounded-xs"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1620,10 +1436,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
           <div
             className={`${
               viewMode === 'split' ? 'hidden lg:flex lg:w-1/2' : 'w-full'
-            } flex-1 bg-[#231F1F] p-4 sm:p-6 overflow-hidden flex flex-col items-center justify-start`}
+            } flex flex-col bg-[#231F1F] h-full min-h-0 overflow-hidden items-center justify-start`}
           >
             {/* Viewport Frame Header */}
-            <div className="w-full max-w-full flex items-center justify-between text-white/70 text-xs pb-3 border-b border-white/10 mb-4 px-2">
+            <div className="shrink-0 w-full max-w-full flex items-center justify-between text-white/70 text-xs py-2.5 px-4 sm:px-6 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="uppercase tracking-widest text-[10px] font-semibold text-white/90">
@@ -1635,8 +1451,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
               </span>
             </div>
 
-            {/* Scrollable Device Wrapper */}
-            <div className="w-full flex-1 overflow-y-auto flex justify-center items-start pb-12">
+            {/* Scrollable Device Wrapper - Independent Isolated Scroll */}
+            <div className="flex-1 min-h-0 w-full overflow-y-auto p-4 sm:p-6 flex justify-center items-start pb-16">
               <div
                 className={`transition-all duration-300 bg-white shadow-2xl rounded-xs overflow-hidden ${
                   deviceMode === 'mobile'

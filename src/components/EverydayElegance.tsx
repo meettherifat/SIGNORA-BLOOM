@@ -26,7 +26,7 @@ export const EverydayElegance: React.FC<EverydayEleganceProps> = () => {
         {/* Centered Serif Heading */}
         <div className="text-center mb-10 sm:mb-14">
           <h2 className="font-serif text-3xl sm:text-4xl md:text-[38px] font-normal text-[#2A2323] tracking-wide">
-            Everyday Elegance
+            {content?.everydayElegance?.title || 'Everyday Elegance'}
           </h2>
         </div>
 

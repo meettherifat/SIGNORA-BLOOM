@@ -47,6 +47,9 @@ export interface SiteContent {
     perks: { title: string; desc: string }[];
     features: { number: string; title: string; description: string }[];
   };
+  everydayElegance?: {
+    title: string;
+  };
   products: {
     id: string;
     refCode: string;
@@ -220,6 +223,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         description: 'Vestibulum ante ipsum primis in faucibus orci luctus',
       },
     ],
+  },
+  everydayElegance: {
+    title: 'Everyday Elegance',
   },
   products: [
     {
