@@ -966,26 +966,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                           isLiveSynced={content.editorial?.tabs?.[idx]?.insetDetailImage === tab.insetDetailImage}
                         />
                       </div>
-
-                      {/* Button CTA text */}
-                      <div className="pt-2">
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Call To Action Button Label
-                        </label>
-                        <input
-                          type="text"
-                          value={tab.buttonLabel}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => {
-                              const next = { ...prev };
-                              next.editorial.tabs[idx].buttonLabel = val;
-                              return next;
-                            });
-                          }}
-                          className="w-full sm:w-1/2 px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
-                        />
-                      </div>
                     </div>
                   ))}
                 </div>

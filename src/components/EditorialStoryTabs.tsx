@@ -5,10 +5,10 @@ import { ImageWithSkeleton } from './ui/ImageWithSkeleton';
 import { EditorialStorySkeleton } from './skeletons/EditorialStorySkeleton';
 
 interface EditorialStoryTabsProps {
-  onExplore: () => void;
+  onExplore?: () => void;
 }
 
-export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = ({ onExplore }) => {
+export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = () => {
   const { content, isLoading } = useSiteContent();
   const [activeTabId, setActiveTabId] = useState('beauty-ingenuity');
 
@@ -99,19 +99,9 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = ({ onExplor
               {activeTab.headline}
             </h3>
 
-            <p className="font-sans text-xs sm:text-[13px] text-[#665959] leading-relaxed max-w-lg mb-8 font-light">
+            <p className="font-sans text-xs sm:text-[13px] text-[#665959] leading-relaxed max-w-lg font-light">
               {activeTab.description}
             </p>
-
-            <div>
-              <button
-                id="editorial-tab-cta-btn"
-                onClick={onExplore}
-                className="px-8 sm:px-9 py-2.5 sm:py-3 border border-[#332B2B] text-[#332B2B] hover:bg-[#332B2B] hover:text-[#FFFFFF] text-[10px] sm:text-[11px] tracking-[0.22em] uppercase font-normal transition-colors cursor-pointer bg-transparent"
-              >
-                {activeTab.buttonLabel}
-              </button>
-            </div>
           </div>
 
           {/* RIGHT COLUMN: Big image (3:4 ratio) & Small overlapping inset image (1:1 ratio) */}

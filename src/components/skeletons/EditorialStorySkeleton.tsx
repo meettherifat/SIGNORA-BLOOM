@@ -25,9 +25,6 @@ export const EditorialStorySkeleton: React.FC = () => {
               <div className="h-3 w-5/6 bg-[#EFE8DF] rounded-xs luxury-shimmer" />
               <div className="h-3 w-4/6 bg-[#EFE8DF] rounded-xs luxury-shimmer" />
             </div>
-            <div className="pt-4">
-              <div className="h-10 w-36 border border-[#332B2B]/30 bg-transparent rounded-xs luxury-shimmer" />
-            </div>
           </div>
 
           {/* Right Column: 3:4 Main Image & 1:1 Inset Detail */}
