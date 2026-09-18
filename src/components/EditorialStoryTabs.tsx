@@ -119,11 +119,7 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = ({ onExplor
             <div className="relative w-full max-w-[340px] sm:max-w-[390px] md:max-w-[420px] mx-auto md:ml-auto md:mr-0">
               
               {/* BIG IMAGE: Exactly 3:4 aspect ratio with luxury shimmer skeleton */}
-              <div 
-                data-cursor="image"
-                data-cursor-text="ARCHIVE"
-                className="relative w-full aspect-[3/4] bg-[#EFE6DC] overflow-hidden rounded-xs shadow-xs cursor-pointer"
-              >
+              <div className="relative w-full aspect-[3/4] bg-[#EFE6DC] overflow-hidden rounded-xs shadow-xs">
                 <ImageWithSkeleton
                   id="editorial-main-img"
                   src={activeTab.mainImage}
@@ -138,9 +134,7 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = ({ onExplor
 
               {/* SMALL INSET IMAGE: Exactly 1:1 aspect ratio (Square), displayed fully and cleanly on all devices */}
               <div 
-                data-cursor="image"
-                data-cursor-text="DETAIL"
-                className="absolute bottom-3 left-3 sm:-bottom-6 sm:-left-6 md:-bottom-8 md:-left-8 w-24 sm:w-32 md:w-36 lg:w-40 aspect-square bg-[#FFFFFF] p-1.5 sm:p-2 shadow-[0_10px_25px_rgba(51,43,43,0.16)] z-20 rounded-xs transition-all cursor-pointer"
+                className="absolute bottom-3 left-3 sm:-bottom-6 sm:-left-6 md:-bottom-8 md:-left-8 w-24 sm:w-32 md:w-36 lg:w-40 aspect-square bg-[#FFFFFF] p-1.5 sm:p-2 shadow-[0_10px_25px_rgba(51,43,43,0.16)] z-20 rounded-xs transition-all"
               >
                 <div className="w-full h-full aspect-square overflow-hidden bg-[#FAF5EE]">
                   <ImageWithSkeleton

@@ -12,7 +12,6 @@ import { ContactConciergeModal } from './components/ContactConciergeModal';
 import { Accessory } from './types';
 import { SiteContentProvider } from './context/SiteContentContext';
 import { AdminPage } from './pages/AdminPage';
-import { CustomCursor } from './components/ui/CustomCursor';
 
 export default function App() {
   const getRouteFromUrl = () => {
@@ -172,9 +171,6 @@ export default function App() {
             }}
             preselectedAccessory={inquiryAccessory}
           />
-
-          {/* Luxury Atelier Custom Kinetic Cursor */}
-          <CustomCursor />
         </div>
       )}
     </SiteContentProvider>

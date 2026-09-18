@@ -7,7 +7,7 @@ interface EverydayEleganceProps {
   onSelectPiece?: (piece: any) => void;
 }
 
-export const EverydayElegance: React.FC<EverydayEleganceProps> = ({ onSelectPiece }) => {
+export const EverydayElegance: React.FC<EverydayEleganceProps> = () => {
   const { content, isLoading } = useSiteContent();
   const products = (content?.products || []).slice(0, 4);
 
@@ -30,23 +30,12 @@ export const EverydayElegance: React.FC<EverydayEleganceProps> = ({ onSelectPiec
           </h2>
         </div>
 
-        {/* 4 Square Items Row: Clean imagery with interactive cursor affordance */}
+        {/* 4 Square Items Row: Completely clean images without any badges, discount text, boxes, or links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
           {products.map((item, idx) => (
             <div
               key={item.id}
-              role={onSelectPiece ? 'button' : undefined}
-              tabIndex={onSelectPiece ? 0 : undefined}
-              onClick={() => onSelectPiece?.(item)}
-              onKeyDown={(e) => {
-                if ((e.key === 'Enter' || e.key === ' ') && onSelectPiece) {
-                  e.preventDefault();
-                  onSelectPiece(item);
-                }
-              }}
-              data-cursor="image"
-              data-cursor-text="DISCOVER"
-              className="relative aspect-square bg-[#F7F4F0] overflow-hidden select-none cursor-pointer focus:outline-hidden"
+              className="relative aspect-square bg-[#F7F4F0] overflow-hidden select-none cursor-default"
             >
               {/* Product Image with high-end skeleton placeholder */}
               <ImageWithSkeleton

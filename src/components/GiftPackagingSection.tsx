@@ -107,9 +107,7 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
           <div className="order-1 md:order-2 md:col-span-6 flex justify-center items-end w-full">
             <div
               aria-label="Signature Gift Box"
-              data-cursor="image"
-              data-cursor-text="ATELIER"
-              className="relative w-full max-w-[340px] sm:max-w-[440px] md:max-w-[500px] lg:max-w-[540px] aspect-square select-none cursor-pointer rounded-t-[5px] rounded-b-none overflow-hidden"
+              className="relative w-full max-w-[340px] sm:max-w-[440px] md:max-w-[500px] lg:max-w-[540px] aspect-square select-none cursor-default rounded-t-[5px] rounded-b-none overflow-hidden"
               style={{
                 /* Soft, subtle ambient shadow matching high-end editorial lighting */
                 boxShadow:

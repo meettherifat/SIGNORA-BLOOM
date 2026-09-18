@@ -8,7 +8,7 @@ interface FeaturedCollectionsProps {
   onSelectCategory?: (category: string) => void;
 }
 
-export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSelectCategory }) => {
+export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
   const { content, isLoading } = useSiteContent();
   const collections = content?.collections || [];
 
@@ -58,18 +58,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSele
           {/* ========================================================== */}
           <div 
             id="mosaic-rings"
-            role={onSelectCategory ? 'button' : undefined}
-            tabIndex={onSelectCategory ? 0 : undefined}
-            onClick={() => onSelectCategory?.('fine-rings')}
-            onKeyDown={(e) => {
-              if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
-                e.preventDefault();
-                onSelectCategory('fine-rings');
-              }
-            }}
-            data-cursor="image"
-            data-cursor-text="EXPLORE"
-            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-pointer focus:outline-hidden"
+            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
           >
             {/* Aspect Ratio 9:16 with skeleton loader */}
             <ImageWithSkeleton
@@ -93,18 +82,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSele
             {/* TOP: Image 2 -> 1:1 RATIO (SQUARE) */}
             <div 
               id="mosaic-bracelets"
-              role={onSelectCategory ? 'button' : undefined}
-              tabIndex={onSelectCategory ? 0 : undefined}
-              onClick={() => onSelectCategory?.('sculptural-bracelets')}
-              onKeyDown={(e) => {
-                if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
-                  e.preventDefault();
-                  onSelectCategory('sculptural-bracelets');
-                }
-              }}
-              data-cursor="image"
-              data-cursor-text="EXPLORE"
-              className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs w-full aspect-square shrink-0 cursor-pointer focus:outline-hidden"
+              className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs w-full aspect-square shrink-0 cursor-default"
             >
               <ImageWithSkeleton
                 id="mosaic-img-bracelets"
@@ -124,18 +102,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSele
               {/* Image 3 */}
               <div
                 id="mosaic-necklaces"
-                role={onSelectCategory ? 'button' : undefined}
-                tabIndex={onSelectCategory ? 0 : undefined}
-                onClick={() => onSelectCategory?.('medallion-necklaces')}
-                onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
-                    e.preventDefault();
-                    onSelectCategory('medallion-necklaces');
-                  }
-                }}
-                data-cursor="image"
-                data-cursor-text="EXPLORE"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-pointer focus:outline-hidden"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default"
               >
                 <ImageWithSkeleton
                   id="mosaic-img-necklaces"
@@ -151,18 +118,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSele
               {/* Image 4 */}
               <div
                 id="mosaic-earrings"
-                role={onSelectCategory ? 'button' : undefined}
-                tabIndex={onSelectCategory ? 0 : undefined}
-                onClick={() => onSelectCategory?.('drop-hoop-earrings')}
-                onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
-                    e.preventDefault();
-                    onSelectCategory('drop-hoop-earrings');
-                  }
-                }}
-                data-cursor="image"
-                data-cursor-text="EXPLORE"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-pointer focus:outline-hidden"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default"
               >
                 <ImageWithSkeleton
                   id="mosaic-img-earrings"
@@ -184,18 +140,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSele
           {/* ========================================================== */}
           <div 
             id="mosaic-charms"
-            role={onSelectCategory ? 'button' : undefined}
-            tabIndex={onSelectCategory ? 0 : undefined}
-            onClick={() => onSelectCategory?.('shop-charms')}
-            onKeyDown={(e) => {
-              if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
-                e.preventDefault();
-                onSelectCategory('shop-charms');
-              }
-            }}
-            data-cursor="image"
-            data-cursor-text="EXPLORE"
-            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-pointer focus:outline-hidden"
+            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
           >
             {/* Aspect Ratio 9:16 with skeleton loader */}
             <ImageWithSkeleton

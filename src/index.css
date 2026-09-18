@@ -121,12 +121,4 @@
   animation: luxuryPulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Editorial Custom Cursor subtle integration on desktop pointers */
-@media (pointer: fine) {
-  /* Subtle refinement: keep native pointer feel intact while allowing the custom kinetic ring to enhance interactive states */
-  button, a, [role="button"] {
-    cursor: pointer;
-  }
-}
-
 
