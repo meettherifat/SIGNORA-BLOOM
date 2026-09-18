@@ -282,6 +282,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     email: string;
     conciergeHours: string;
     address: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
   };
   hero: {
     slides: {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Lock } from 'lucide-react';
+import { useSiteContent } from '../context/SiteContentContext';
 
 interface FooterProps {
   onOpenContact: () => void;
@@ -8,6 +9,14 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection, onNavigateAdmin }) => {
+  const { content } = useSiteContent();
+
+  const facebookUrl = content?.brand?.facebookUrl || 'https://www.facebook.com/signorabloom/';
+  const instagramUrl = content?.brand?.instagramUrl || 'https://instagram.com/tuhinajahantopa';
+
+  const normalizedFacebookUrl = facebookUrl.startsWith('http') ? facebookUrl : `https://${facebookUrl}`;
+  const normalizedInstagramUrl = instagramUrl.startsWith('http') ? instagramUrl : `https://${instagramUrl}`;
+
   return (
     <footer id="footer-section" className="bg-[#FFFFFF] text-[#332B2B] border-t border-[#F0EBE5] py-14 sm:py-18">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
@@ -60,7 +69,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
         <div className="flex items-center justify-center space-x-6 text-[10px] sm:text-[11px] tracking-[0.2em] uppercase text-[#736767] mb-8">
           <a
             id="footer-instagram-link"
-            href="https://instagram.com"
+            href={normalizedInstagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#332B2B] transition-colors"
@@ -70,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
           <span className="text-[#D8C8B8]">·</span>
           <a
             id="footer-facebook-link"
-            href="https://facebook.com"
+            href={normalizedFacebookUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-[#332B2B] transition-colors"

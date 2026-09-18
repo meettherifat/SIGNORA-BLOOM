@@ -16,6 +16,8 @@ export interface SiteContent {
     email: string;
     conciergeHours: string;
     address: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
   };
   hero: {
     slides: {
@@ -77,6 +79,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     email: 'concierge@signorabloom.com',
     conciergeHours: 'Mon - Sat, 9:00 AM - 8:00 PM EST',
     address: 'Via Monte Napoleone 8, Milan & 740 Madison Ave, New York',
+    facebookUrl: 'https://www.facebook.com/signorabloom/',
+    instagramUrl: 'https://instagram.com/tuhinajahantopa',
   },
   hero: {
     slides: [
