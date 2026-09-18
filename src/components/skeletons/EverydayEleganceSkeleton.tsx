@@ -7,7 +7,7 @@ export const EverydayEleganceSkeleton: React.FC = () => {
       aria-label="Loading Everyday Elegance Collection"
       className="w-full bg-[#FFFFFF] py-12 sm:py-16 md:py-20 select-none"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Centered Heading Skeleton */}
         <div className="flex flex-col items-center justify-center mb-10 sm:mb-14">
           <div className="h-8 sm:h-9 md:h-10 w-48 sm:w-64 bg-[#F2ECE4] rounded-xs luxury-shimmer mb-2" />

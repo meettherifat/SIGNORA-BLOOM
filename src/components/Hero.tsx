@@ -115,7 +115,7 @@ export const Hero: React.FC<HeroProps> = () => {
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      className="relative w-full overflow-hidden bg-[#F5EFEB] border-b border-[#ECE3DA] aspect-[16/9] flex items-center justify-center select-none"
+      className="relative w-full overflow-hidden bg-[#F5EFEB] border-b border-[#ECE3DA] aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9] min-h-[280px] sm:min-h-[380px] md:min-h-[460px] flex items-center justify-center select-none"
     >
       {/* 1. SLIDES CONTAINER (Seamless photographic scenes, full 16:9 display across all devices) */}
       <div className="absolute inset-0 w-full h-full">
@@ -162,9 +162,9 @@ export const Hero: React.FC<HeroProps> = () => {
           e.stopPropagation();
           prevSlide();
         }}
-        className="absolute left-2 sm:left-4 md:left-6 lg:left-8 top-1/2 -translate-y-1/2 w-7 sm:w-9 md:w-10 h-7 sm:h-9 md:h-10 rounded-full border border-[#4A3F3F]/25 hover:border-[#2A2323] bg-[#FAF6F1]/80 hover:bg-[#FFFFFF] text-[#4A3F3F] hover:text-[#2A2323] flex items-center justify-center transition-all z-30 shadow-xs cursor-pointer active:scale-95 backdrop-blur-[2px]"
+        className="absolute left-2.5 sm:left-4 md:left-6 lg:left-8 top-1/2 -translate-y-1/2 w-8 sm:w-9 md:w-10 h-8 sm:h-9 md:h-10 rounded-full border border-[#4A3F3F]/25 hover:border-[#2A2323] bg-[#FAF6F1]/85 hover:bg-[#FFFFFF] text-[#4A3F3F] hover:text-[#2A2323] flex items-center justify-center transition-all z-30 shadow-xs cursor-pointer active:scale-95 backdrop-blur-[2px]"
       >
-        <ChevronLeft className="w-3.5 sm:w-4 md:w-5 h-3.5 sm:h-4 md:h-5 stroke-[1.5]" />
+        <ChevronLeft className="w-4 sm:w-4.5 md:w-5 h-4 sm:h-4.5 md:h-5 stroke-[1.5]" />
       </button>
 
       {/* 3. RIGHT CIRCULAR ARROW NAVIGATION */}
@@ -176,14 +176,14 @@ export const Hero: React.FC<HeroProps> = () => {
           e.stopPropagation();
           nextSlide();
         }}
-        className="absolute right-2 sm:right-4 md:right-6 lg:right-8 top-1/2 -translate-y-1/2 w-7 sm:w-9 md:w-10 h-7 sm:h-9 md:h-10 rounded-full border border-[#4A3F3F]/25 hover:border-[#2A2323] bg-[#FAF6F1]/80 hover:bg-[#FFFFFF] text-[#4A3F3F] hover:text-[#2A2323] flex items-center justify-center transition-all z-30 shadow-xs cursor-pointer active:scale-95 backdrop-blur-[2px]"
+        className="absolute right-2.5 sm:right-4 md:right-6 lg:right-8 top-1/2 -translate-y-1/2 w-8 sm:w-9 md:w-10 h-8 sm:h-9 md:h-10 rounded-full border border-[#4A3F3F]/25 hover:border-[#2A2323] bg-[#FAF6F1]/85 hover:bg-[#FFFFFF] text-[#4A3F3F] hover:text-[#2A2323] flex items-center justify-center transition-all z-30 shadow-xs cursor-pointer active:scale-95 backdrop-blur-[2px]"
       >
-        <ChevronRight className="w-3.5 sm:w-4 md:w-5 h-3.5 sm:h-4 md:h-5 stroke-[1.5]" />
+        <ChevronRight className="w-4 sm:w-4.5 md:w-5 h-4 sm:h-4.5 md:h-5 stroke-[1.5]" />
       </button>
 
       {/* 4. SLIDER PAGINATION DOTS AT THE BOTTOM OF THE SECTION */}
       <div 
-        className="absolute bottom-2.5 sm:bottom-4 md:bottom-6 left-0 right-0 z-20 flex items-center justify-center space-x-2.5 sm:space-x-3 text-[#2A2323]"
+        className="absolute bottom-2.5 sm:bottom-4 md:bottom-6 left-0 right-0 z-20 flex items-center justify-center space-x-1.5 sm:space-x-2.5 text-[#2A2323]"
         role="tablist"
         aria-label="Slide Pagination"
       >
@@ -200,7 +200,7 @@ export const Hero: React.FC<HeroProps> = () => {
                 e.stopPropagation();
                 goToSlide(index);
               }}
-              className="cursor-pointer p-1 group flex items-center justify-center transition-transform hover:scale-110"
+              className="cursor-pointer p-2 group flex items-center justify-center transition-transform hover:scale-110 min-w-[32px] min-h-[32px]"
             >
               {isActive ? (
                 /* Active Dot: Elegant Outer Ring with Solid Center Dot */

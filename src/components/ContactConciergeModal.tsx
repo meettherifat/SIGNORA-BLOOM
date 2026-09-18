@@ -48,8 +48,9 @@ export const ContactConciergeModal: React.FC<ContactConciergeModalProps> = ({
       >
         <button
           id="close-concierge-modal-btn"
+          type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-[#736767] hover:text-[#332B2B] transition-colors"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2.5 text-[#736767] hover:text-[#332B2B] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Close form"
         >
           <X className="w-5 h-5" />

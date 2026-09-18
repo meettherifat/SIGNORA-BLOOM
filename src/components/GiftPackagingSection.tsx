@@ -29,7 +29,7 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
       aria-label="Why Signora Bloom Curated Accessories"
       className="w-full bg-[#826D5C] text-white pt-14 sm:pt-20 md:pt-24 pb-0 relative overflow-hidden select-none"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* ========================================================= */}
         {/* TOP: Geometric Crown Icon & Headline (Exact to reference) */}
@@ -58,7 +58,7 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
           </div>
 
           {/* Heading: SURPRISE A LOVED ONE */}
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-[34px] font-normal tracking-[0.2em] leading-snug uppercase text-white max-w-md">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-[34px] font-normal tracking-[0.2em] leading-snug uppercase text-white max-w-md px-2">
             {headline}
           </h2>
         </div>
@@ -71,30 +71,30 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
           {/* ------------------------------------------------------- */}
           {/* LEFT COLUMN: Points 01 & 02 (flanking upper and lower)  */}
           {/* ------------------------------------------------------- */}
-          <div className="order-2 md:order-1 md:col-span-3 flex flex-col justify-between pb-8 sm:pb-16 md:pb-20 gap-16 sm:gap-24 text-center md:text-right">
+          <div className="order-2 md:order-1 md:col-span-3 flex flex-col justify-between pb-8 sm:pb-14 md:pb-20 gap-10 sm:gap-16 md:gap-24 text-center md:text-right">
             
             {/* Feature 01 (Upper) */}
-            <div className="flex flex-col items-center md:items-end">
+            <div className="flex flex-col items-center md:items-end px-2">
               <span className="font-serif italic text-2xl sm:text-3xl lg:text-4xl text-white/90 font-light mb-1.5 tracking-wide">
                 {f1.number}
               </span>
               <h3 className="font-serif text-sm sm:text-base lg:text-lg font-normal text-white mb-1.5 tracking-wide">
                 {f1.title}
               </h3>
-              <p className="font-sans text-[11px] sm:text-xs text-white/75 leading-relaxed max-w-[220px] font-light">
+              <p className="font-sans text-[11px] sm:text-xs text-white/75 leading-relaxed max-w-[240px] md:max-w-[220px] font-light">
                 {f1.description}
               </p>
             </div>
 
             {/* Feature 02 (Lower) */}
-            <div className="flex flex-col items-center md:items-end">
+            <div className="flex flex-col items-center md:items-end px-2">
               <span className="font-serif italic text-2xl sm:text-3xl lg:text-4xl text-white/90 font-light mb-1.5 tracking-wide">
                 {f2.number}
               </span>
               <h3 className="font-serif text-sm sm:text-base lg:text-lg font-normal text-white mb-1.5 tracking-wide">
                 {f2.title}
               </h3>
-              <p className="font-sans text-[11px] sm:text-xs text-white/75 leading-relaxed max-w-[220px] font-light">
+              <p className="font-sans text-[11px] sm:text-xs text-white/75 leading-relaxed max-w-[240px] md:max-w-[220px] font-light">
                 {f2.description}
               </p>
             </div>
@@ -104,10 +104,10 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
           {/* ------------------------------------------------------- */}
           {/* CENTER: Extra-Large Square Gift Box Cut Flush at Bottom */}
           {/* ------------------------------------------------------- */}
-          <div className="order-1 md:order-2 md:col-span-6 flex justify-center items-end w-full">
+          <div className="order-1 md:order-2 md:col-span-6 flex justify-center items-end w-full px-2 sm:px-0">
             <div
               aria-label="Signature Gift Box"
-              className="relative w-full max-w-[340px] sm:max-w-[440px] md:max-w-[500px] lg:max-w-[540px] aspect-square select-none cursor-default rounded-t-[5px] rounded-b-none overflow-hidden"
+              className="relative w-full max-w-[290px] sm:max-w-[420px] md:max-w-[480px] lg:max-w-[530px] aspect-square select-none cursor-default rounded-t-[5px] rounded-b-none overflow-hidden"
               style={{
                 /* Soft, subtle ambient shadow matching high-end editorial lighting */
                 boxShadow:

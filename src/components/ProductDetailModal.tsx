@@ -28,8 +28,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {/* Close Button */}
         <button
           id="close-detail-modal-btn"
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 text-[#736767] hover:text-[#332B2B] transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2.5 text-[#736767] hover:text-[#332B2B] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center bg-white/70 sm:bg-transparent rounded-full sm:rounded-none"
           aria-label="Close details"
         >
           <X className="w-5 h-5" />

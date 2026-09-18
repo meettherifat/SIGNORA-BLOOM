@@ -4,7 +4,7 @@ export const HeroSkeleton: React.FC = () => {
   return (
     <div
       aria-label="Loading Hero Slider"
-      className="relative w-full overflow-hidden bg-[#F5EFEB] border-b border-[#ECE3DA] aspect-[16/9] flex items-center justify-center select-none luxury-shimmer"
+      className="relative w-full overflow-hidden bg-[#F5EFEB] border-b border-[#ECE3DA] aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9] min-h-[280px] sm:min-h-[380px] md:min-h-[460px] flex items-center justify-center select-none luxury-shimmer"
     >
       {/* Background atelier watermark */}
       <div className="flex flex-col items-center justify-center gap-3 opacity-30 text-[#8C6D4F]">

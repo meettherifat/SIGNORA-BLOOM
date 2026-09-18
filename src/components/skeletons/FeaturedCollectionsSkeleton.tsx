@@ -5,10 +5,10 @@ export const FeaturedCollectionsSkeleton: React.FC = () => {
   return (
     <div
       aria-label="Loading Collections Mosaic"
-      className="w-full bg-[#FFFFFF] py-8 sm:py-12 md:py-16 select-none"
+      className="w-full bg-[#FFFFFF] py-10 sm:py-14 md:py-18 select-none"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-stretch">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 md:gap-5 items-stretch">
           {/* Column 1: 9:16 Tall Card Skeleton */}
           <div className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full">
             <ImageSkeleton

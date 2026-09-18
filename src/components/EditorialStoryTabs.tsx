@@ -64,18 +64,19 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = () => {
         </svg>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Centered Tab Headers */}
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 md:gap-16 mb-12 sm:mb-16 border-b border-[#EADFD5]/60 pb-3">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-12 md:gap-x-16 gap-y-2 mb-10 sm:mb-14 md:mb-16 border-b border-[#EADFD5]/60 pb-3">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
             return (
               <button
                 key={tab.id}
                 id={`tab-${tab.id}`}
+                type="button"
                 onClick={() => setActiveTabId(tab.id)}
-                className={`text-[10px] sm:text-[11px] tracking-[0.24em] uppercase py-2 transition-all cursor-pointer relative ${
+                className={`text-[10px] sm:text-[11px] tracking-[0.24em] uppercase py-2 px-1 min-h-[40px] flex items-center transition-all cursor-pointer relative ${
                   isActive
                     ? 'text-[#2A2323] font-medium'
                     : 'text-[#8E8080] hover:text-[#2A2323]'

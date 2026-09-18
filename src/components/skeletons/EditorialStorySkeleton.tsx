@@ -7,7 +7,7 @@ export const EditorialStorySkeleton: React.FC = () => {
       aria-label="Loading Editorial Story"
       className="w-full bg-[#FAF5F0] pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 md:pb-28 border-t border-[#EFE8DF] relative overflow-hidden select-none"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Centered Tab Headers Skeleton */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 md:gap-16 mb-12 sm:mb-16 border-b border-[#EADFD5]/60 pb-3">
           <div className="h-4 w-32 bg-[#EADFD5] rounded-xs luxury-shimmer" />

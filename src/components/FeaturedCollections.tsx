@@ -46,21 +46,21 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
     <section 
       id="collections" 
       aria-label="Category Collections Mosaic"
-      className="w-full bg-[#FFFFFF] py-8 sm:py-12 md:py-16"
+      className="w-full bg-[#FFFFFF] py-10 sm:py-14 md:py-18"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Exact 3-Column Mosaic Grid: All columns aligned flush at top and bottom */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-stretch select-none">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 md:gap-5 items-stretch select-none">
           
           {/* ========================================================== */}
-          {/* 1. LEFT COLUMN: Image 1 -> 9:16 RATIO                      */}
+          {/* 1. LEFT COLUMN: Image 1 -> 9:16 RATIO (4:5 on mobile)       */}
           {/* ========================================================== */}
           <div 
             id="mosaic-rings"
             className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
           >
-            {/* Aspect Ratio 9:16 with skeleton loader */}
+            {/* Aspect Ratio 9:16 on desktop, 4:5 on mobile for balanced presentation */}
             <ImageWithSkeleton
               id="mosaic-img-rings"
               src={colRings.image}
@@ -68,7 +68,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
               aspectRatio="9/16"
               skeletonLabel="FINE RINGS"
               className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
-              containerClassName="w-full h-full aspect-[9/16]"
+              containerClassName="w-full h-full aspect-[4/5] sm:aspect-[3/4] md:aspect-[9/16]"
               fallbackSrc="https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=85"
             />
           </div>
@@ -77,7 +77,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           {/* 2. MIDDLE COLUMN: Image 2 (1:1 RATIO) + Images 3 & 4       */}
           {/* Aligned flush at the bottom with Image 1 & Image 5        */}
           {/* ========================================================== */}
-          <div className="md:col-span-4 flex flex-col justify-between gap-3 sm:gap-4 h-full">
+          <div className="md:col-span-4 flex flex-col justify-between gap-3.5 sm:gap-4 md:gap-5 h-full">
             
             {/* TOP: Image 2 -> 1:1 RATIO (SQUARE) */}
             <div 
@@ -97,12 +97,12 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
             </div>
 
             {/* BOTTOM: Images 3 & 4 side by side -> Fills remaining height to align bottom perfectly */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 flex-1 min-h-0">
+            <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 flex-1 min-h-0">
               
               {/* Image 3 */}
               <div
                 id="mosaic-necklaces"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default aspect-square sm:aspect-auto"
               >
                 <ImageWithSkeleton
                   id="mosaic-img-necklaces"
@@ -118,7 +118,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
               {/* Image 4 */}
               <div
                 id="mosaic-earrings"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default aspect-square sm:aspect-auto"
               >
                 <ImageWithSkeleton
                   id="mosaic-img-earrings"
@@ -136,13 +136,13 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           </div>
 
           {/* ========================================================== */}
-          {/* 3. RIGHT COLUMN: Image 5 -> 9:16 RATIO                     */}
+          {/* 3. RIGHT COLUMN: Image 5 -> 9:16 RATIO (4:5 on mobile)      */}
           {/* ========================================================== */}
           <div 
             id="mosaic-charms"
             className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
           >
-            {/* Aspect Ratio 9:16 with skeleton loader */}
+            {/* Aspect Ratio 9:16 on desktop, 4:5 on mobile for balanced presentation */}
             <ImageWithSkeleton
               id="mosaic-img-charms"
               src={colCharms.image}
@@ -150,7 +150,7 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
               aspectRatio="9/16"
               skeletonLabel="SHOP CHARMS"
               className="w-full h-full object-cover object-top transition-transform duration-700 ease-out hover:scale-102"
-              containerClassName="w-full h-full aspect-[9/16]"
+              containerClassName="w-full h-full aspect-[4/5] sm:aspect-[3/4] md:aspect-[9/16]"
               fallbackSrc="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=85"
             />
           </div>

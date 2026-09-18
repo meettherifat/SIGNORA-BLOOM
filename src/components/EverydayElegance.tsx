@@ -21,7 +21,7 @@ export const EverydayElegance: React.FC<EverydayEleganceProps> = () => {
       aria-label="Everyday Elegance Collection"
       className="w-full bg-[#FFFFFF] py-12 sm:py-16 md:py-20"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Centered Serif Heading */}
         <div className="text-center mb-10 sm:mb-14">
