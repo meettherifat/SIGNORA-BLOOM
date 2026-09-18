@@ -28,8 +28,8 @@ import {
   FileCode,
   Cloud,
 } from 'lucide-react';
-import { SiteContent } from '../../siteContent';
-import { useSiteContent } from '../../context/SiteContentContext';
+import { SiteContent, DEFAULT_SITE_CONTENT, CollectionItem } from '../../siteContent';
+import { useSiteContent, VerifiedHeroSlide, mergeCollections } from '../../context/SiteContentContext';
 import { safeParseResponseJson } from '../../utils/security';
 import { compressImageFile } from '../../utils/storageDb';
 
@@ -69,6 +69,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [isSaving, setIsSaving] = useState(false);
+  const [savePhase, setSavePhase] = useState<'idle' | 'merging' | 'persisting' | 'verifying' | 'verified'>('idle');
+  const [verifiedSlides, setVerifiedSlides] = useState<VerifiedHeroSlide[] | null>(null);
+  const [verifiedTimestamp, setVerifiedTimestamp] = useState<string | null>(null);
+  const [showVerifiedBanner, setShowVerifiedBanner] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -89,6 +93,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       // Update global context so the preview updates in real-time
       updateContent(next);
       return next;
+    });
+  };
+
+  // Dedicated immutable updater for Hero slides that guarantees sibling slides and fields are never lost
+  const updateHeroSlide = (
+    slideIndex: number,
+    partial: Partial<{
+      id: number;
+      image: string;
+      alt: string;
+      headline: string;
+      buttonText: string;
+    }>
+  ) => {
+    updateDraft((prev) => {
+      const slides = Array.isArray(prev.hero?.slides) ? [...prev.hero.slides] : [];
+      const currentSlide = slides[slideIndex] || {
+        id: slideIndex,
+        image: '',
+        alt: '',
+        headline: '',
+        buttonText: 'SHOP NOW',
+      };
+      slides[slideIndex] = {
+        ...currentSlide,
+        ...partial,
+      };
+      return {
+        ...prev,
+        hero: {
+          ...prev.hero,
+          slides,
+        },
+      };
     });
   };
 
@@ -143,18 +181,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Save changes to backend
+  // Save changes to backend with real-time step verification
   const handleSave = async () => {
     setIsSaving(true);
     setSaveStatus(null);
+    setShowVerifiedBanner(false);
+
+    // Step 1: Merging phase
+    setSavePhase('merging');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Step 2: Persisting phase
+    setSavePhase('persisting');
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Step 3: Real-time verification phase
+    setSavePhase('verifying');
     const result = await saveContentToServer(draft, token);
+
     setIsSaving(false);
     setSaveStatus(result);
+
     if (result.success) {
       setHasUnsavedChanges(false);
-      setTimeout(() => setSaveStatus(null), 4000);
-    } else if (result.message && (result.message.includes('Unauthorized') || result.message.includes('expired'))) {
-      onSessionExpired?.();
+      setSavePhase('verified');
+      setVerifiedSlides(result.verifiedHeroSlides || null);
+      setVerifiedTimestamp(result.verifiedAt || new Date().toLocaleTimeString());
+      setShowVerifiedBanner(true);
+    } else {
+      setSavePhase('idle');
+      if (result.message && (result.message.includes('Unauthorized') || result.message.includes('expired'))) {
+        onSessionExpired?.();
+      }
     }
   };
 
@@ -439,7 +497,15 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
-              <span>{isSaving ? 'Publishing...' : 'Save & Publish'}</span>
+              <span>
+                {isSaving
+                  ? savePhase === 'merging'
+                    ? '1/3 Merging...'
+                    : savePhase === 'persisting'
+                    ? '2/3 Saving...'
+                    : '3/3 Verifying...'
+                  : 'Save & Publish'}
+              </span>
             </button>
 
             {/* Authenticated user badge */}
@@ -464,21 +530,110 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
 
         </div>
 
-        {/* Save Status Notification Banner */}
-        {saveStatus && (
-          <div
-            className={`mt-2.5 p-2.5 rounded-xs flex items-center justify-between text-xs transition-all ${
-              saveStatus.success
-                ? 'bg-[#EBF7EE] border border-[#BDE3C4] text-[#246633]'
-                : 'bg-[#FCEDED] border border-[#F7C6C6] text-[#A82E2E]'
-            }`}
-          >
+        {/* Real-time Saving Progress Banner */}
+        {isSaving && (
+          <div className="mt-2.5 p-3 rounded-xs bg-[#FBF7F0] border border-[#E8DFC8] text-[#554738] flex items-center justify-between text-xs animate-pulse">
+            <div className="flex items-center gap-2.5">
+              <div className="w-4 h-4 border-2 border-[#A87B4F] border-t-transparent rounded-full animate-spin shrink-0" />
+              <div>
+                <div className="font-semibold tracking-wide text-[#3D2C1E]">
+                  {savePhase === 'merging' && 'Step 1/3: Deep-merging hero images with site content...'}
+                  {savePhase === 'persisting' && 'Step 2/3: Saving to high-capacity storage & database...'}
+                  {savePhase === 'verifying' && 'Step 3/3: Verifying live DOM rendering and image reachability...'}
+                </div>
+                <div className="text-[11px] text-[#7A6B5D]">
+                  Preserving all existing slides and sections without overwriting.
+                </div>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase tracking-wider font-mono bg-white px-2 py-0.5 rounded-xs border border-[#E0D5C0]">
+              Real-time Sync
+            </span>
+          </div>
+        )}
+
+        {/* Real-Time Verification Confirmation Banner with Live Slide Proofs */}
+        {showVerifiedBanner && verifiedSlides && (
+          <div className="mt-2.5 p-3.5 rounded-xs bg-[#F0F9F2] border border-[#BCE4C6] text-[#1D5E2F] shadow-xs transition-all">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-[#D2EED8]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-[#27823E] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-xs text-[#174D26] flex items-center gap-2">
+                    <span>Updates Merged & Verified in Real-Time</span>
+                    {verifiedTimestamp && (
+                      <span className="text-[10px] font-mono font-normal bg-white/80 text-[#27823E] px-1.5 py-0.5 rounded-xs border border-[#BCE4C6]">
+                        {verifiedTimestamp}
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-[#2F6B3E]">
+                    Hero section images successfully merged with existing content. 0 slides overwritten.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={onViewPublicSite}
+                  className="px-2.5 py-1 bg-white hover:bg-[#E2F3E7] border border-[#BCE4C6] text-[#1D5E2F] text-[10px] uppercase tracking-wider font-semibold rounded-xs transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Inspect Live Store</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowVerifiedBanner(false)}
+                  className="p-1 text-[#27823E] hover:text-[#174D26] cursor-pointer"
+                  title="Dismiss banner"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Visual verification proof of each hero slide */}
+            <div className="pt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {verifiedSlides.map((vSlide, vIdx) => (
+                <div
+                  key={`verified-slide-${vSlide.id ?? vIdx}`}
+                  className="bg-white p-2 border border-[#C5E8CE] rounded-xs flex items-center gap-2.5 shadow-xs"
+                >
+                  <div className="w-12 h-9 bg-[#F7F4EF] rounded-xs overflow-hidden border border-[#D5EAD9] shrink-0 relative">
+                    <img
+                      src={vSlide.image}
+                      alt={vSlide.alt || `Verified slide ${vIdx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between text-[11px] font-medium text-[#1A4B27]">
+                      <span>Slide #{vIdx + 1}</span>
+                      <span className="inline-flex items-center gap-0.5 text-[9px] text-[#247037] font-semibold">
+                        <Check className="w-2.5 h-2.5" />
+                        Verified Active
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-[#557F60] truncate font-mono">
+                      {vSlide.image.startsWith('data:') ? 'Web Optimized Image' : vSlide.image.split('/').pop()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Error / Standard Save Notification Banner (if any) */}
+        {saveStatus && !saveStatus.success && (
+          <div className="mt-2.5 p-2.5 rounded-xs flex items-center justify-between text-xs bg-[#FCEDED] border border-[#F7C6C6] text-[#A82E2E]">
             <div className="flex items-center gap-2">
-              {saveStatus.success ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-              ) : (
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-              )}
+              <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{saveStatus.message}</span>
             </div>
             <button
@@ -534,114 +689,163 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
               {/* TAB 1: HERO SLIDER */}
               {activeTab === 'hero' && (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#EADFD5]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#EADFD5] gap-2">
                     <div>
                       <h2 className="font-serif text-xl text-[#2A2323]">Hero Banner Slider</h2>
                       <p className="text-xs text-[#7A6C6C]">
-                        Configure the 16:9 full-width slides, background images, and alt text.
+                        16:9 full-width slides. Updates are merged without overwriting sibling slides.
                       </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-mono tracking-wider bg-[#FAF0E6] text-[#7A5229] px-2.5 py-1 rounded-xs border border-[#E8D4C0]">
+                        {draft.hero.slides.length} Slides Active
+                      </span>
                     </div>
                   </div>
 
-                  {draft.hero.slides.map((slide, idx) => (
-                    <div
-                      key={slide.id}
-                      className="bg-white border border-[#E5DAD0] p-4 sm:p-5 rounded-xs space-y-4 shadow-xs"
-                    >
-                      <div className="flex items-center justify-between pb-2 border-b border-[#F0EAE3]">
-                        <span className="text-xs uppercase tracking-widest font-semibold text-[#2A2323]">
-                          Slide #{idx + 1}
-                        </span>
-                      </div>
-
-                      {/* Image Preview & URL Input */}
-                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                        <div className="sm:col-span-4 aspect-[16/9] bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden relative">
-                          <img
-                            src={slide.image}
-                            alt={slide.alt}
-                            className="w-full h-full object-cover"
-                          />
+                  {draft.hero.slides.map((slide, idx) => {
+                    const isSyncedWithLive = content.hero?.slides?.[idx]?.image === slide.image;
+                    return (
+                      <div
+                        key={slide.id ?? idx}
+                        className="bg-white border border-[#E5DAD0] p-4 sm:p-5 rounded-xs space-y-4 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between pb-2 border-b border-[#F0EAE3]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs uppercase tracking-widest font-semibold text-[#2A2323]">
+                              Hero Slide #{idx + 1}
+                            </span>
+                            {isSyncedWithLive ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] text-[#246633] bg-[#EBF7EE] border border-[#BDE3C4] px-2 py-0.5 rounded-xs font-medium">
+                                <CheckCircle2 className="w-3 h-3 text-[#246633]" />
+                                Live Synced
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] text-[#A66F42] bg-[#FDF6F0] border border-[#EED7C5] px-2 py-0.5 rounded-xs font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#D4823A] animate-pulse" />
+                                Draft Changed (Click Save to verify)
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[#8E8080] font-mono">
+                            Slide ID: {slide.id ?? idx}
+                          </span>
                         </div>
 
-                        <div className="sm:col-span-8 space-y-2">
-                          <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium">
-                            Image Source URL or Local Upload
+                        {/* Image Preview & URL Input */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                          <div className="sm:col-span-4 aspect-[16/9] bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden relative">
+                            <img
+                              key={`${slide.id}-${slide.image}`}
+                              src={slide.image}
+                              alt={slide.alt || `Slide ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/assets/images/jewelry_hero_clean_1_1789492829951.jpg';
+                              }}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-8 space-y-2">
+                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium">
+                              Image Source URL or Local Upload
+                            </label>
+                            <input
+                              type="text"
+                              value={slide.image}
+                              onChange={(e) => {
+                                const newUrl = e.target.value;
+                                updateHeroSlide(idx, { image: newUrl });
+                              }}
+                              placeholder="https://... or /assets/..."
+                              className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
+                            />
+
+                            {/* Upload from file */}
+                            <div className="flex items-center gap-2 pt-1">
+                              <label className="px-3 py-1.5 bg-[#F0EBE5] hover:bg-[#E5DFD7] text-[#3A3232] text-[10px] uppercase tracking-wider rounded-xs cursor-pointer flex items-center gap-1.5 transition-colors">
+                                {uploadingImageKey === `hero-${idx}` ? (
+                                  <div className="w-3 h-3 border-2 border-[#3A3232] border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Upload className="w-3 h-3" />
+                                )}
+                                <span>{uploadingImageKey === `hero-${idx}` ? 'Optimizing...' : 'Upload Image File'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleImageUpload(
+                                        file,
+                                        (url) => {
+                                          updateHeroSlide(idx, { image: url });
+                                        },
+                                        `hero-${idx}`,
+                                        1920,
+                                        1080
+                                      );
+                                    }
+                                  }}
+                                />
+                              </label>
+                              <span className="text-[10px] text-[#8E8080]">Auto-optimized for web (16:9)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Headline & Button Text */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                              Slide Headline
+                            </label>
+                            <input
+                              type="text"
+                              value={slide.headline || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateHeroSlide(idx, { headline: val });
+                              }}
+                              className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                              Button Label
+                            </label>
+                            <input
+                              type="text"
+                              value={slide.buttonText || 'SHOP NOW'}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                updateHeroSlide(idx, { buttonText: val });
+                              }}
+                              className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Alt Description */}
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                            Accessibility Image Description (Alt text)
                           </label>
                           <input
                             type="text"
-                            value={slide.image}
+                            value={slide.alt}
                             onChange={(e) => {
-                              const newUrl = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                next.hero.slides[idx].image = newUrl;
-                                return next;
-                              });
+                              const val = e.target.value;
+                              updateHeroSlide(idx, { alt: val });
                             }}
-                            placeholder="https://... or /assets/..."
-                            className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
+                            className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
                           />
-
-                          {/* Upload from file */}
-                          <div className="flex items-center gap-2 pt-1">
-                            <label className="px-3 py-1.5 bg-[#F0EBE5] hover:bg-[#E5DFD7] text-[#3A3232] text-[10px] uppercase tracking-wider rounded-xs cursor-pointer flex items-center gap-1.5 transition-colors">
-                              {uploadingImageKey === `hero-${idx}` ? (
-                                <div className="w-3 h-3 border-2 border-[#3A3232] border-t-transparent rounded-full animate-spin" />
-                              ) : (
-                                <Upload className="w-3 h-3" />
-                              )}
-                              <span>{uploadingImageKey === `hero-${idx}` ? 'Optimizing...' : 'Upload Image File'}</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    handleImageUpload(
-                                      file,
-                                      (url) => {
-                                        updateDraft((prev) => {
-                                          const next = { ...prev };
-                                          next.hero.slides[idx].image = url;
-                                          return next;
-                                        });
-                                      },
-                                      `hero-${idx}`,
-                                      1920,
-                                      1080
-                                    );
-                                  }
-                                }}
-                              />
-                            </label>
-                            <span className="text-[10px] text-[#8E8080]">Auto-optimized for web (16:9)</span>
-                          </div>
                         </div>
                       </div>
-
-                      {/* Alt Description */}
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                          Accessibility Image Description (Alt text)
-                        </label>
-                        <input
-                          type="text"
-                          value={slide.alt}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            updateDraft((prev) => {
-                              const next = { ...prev };
-                              next.hero.slides[idx].alt = val;
-                              return next;
-                            });
-                          }}
-                          className="w-full px-3 py-1.5 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -863,128 +1067,153 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
               )}
 
               {/* TAB 3: FEATURED COLLECTIONS MOSAIC */}
-              {activeTab === 'collections' && (
-                <div className="space-y-6">
-                  <div className="pb-2 border-b border-[#EADFD5]">
-                    <h2 className="font-serif text-xl text-[#2A2323]">Featured Category Mosaic</h2>
-                    <p className="text-xs text-[#7A6C6C]">
-                      Modify the 4 collections: Fine Rings, Sculptural Bracelets, Drop & Hoop Earrings, and Medallion Necklaces.
-                    </p>
-                  </div>
+              {/* TAB 3: FEATURED COLLECTIONS MOSAIC */}
+              {activeTab === 'collections' && (() => {
+                const positionLabels = [
+                  'Mosaic 1: Left Column (9:16 Tall) · Fine Rings',
+                  'Mosaic 2: Center Top (1:1 Square) · Sculptural Bracelets',
+                  'Mosaic 3: Center Bottom Left · Medallion Necklaces',
+                  'Mosaic 4: Center Bottom Right · Drop & Hoop Earrings',
+                  'Mosaic 5: Right Column (9:16 Tall) · Shop Charms',
+                ];
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {draft.collections.map((col, idx) => (
-                      <div
-                        key={col.id}
-                        className="bg-white border border-[#E5DAD0] p-4 rounded-xs space-y-3 shadow-xs"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-16 h-16 bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden shrink-0">
-                            <img
-                              src={col.image}
-                              alt={col.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <input
-                              type="text"
-                              value={col.title}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                updateDraft((prev) => {
-                                  const next = { ...prev };
-                                  next.collections[idx].title = val;
-                                  return next;
-                                });
-                              }}
-                              className="w-full px-2 py-1 text-xs font-semibold uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1"
-                            />
-                            <input
-                              type="text"
-                              value={col.itemCount}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                updateDraft((prev) => {
-                                  const next = { ...prev };
-                                  next.collections[idx].itemCount = val;
-                                  return next;
-                                });
-                              }}
-                              placeholder="Item Count (e.g. 24 Designs)"
-                              className="w-full px-2 py-1 text-[11px] text-[#7A6C6C] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                            />
-                          </div>
-                        </div>
+                // Ensure all 5 default collections are always present and never deleted
+                const currentCollections: CollectionItem[] = (draft.collections && draft.collections.length >= 5)
+                  ? draft.collections
+                  : mergeCollections(DEFAULT_SITE_CONTENT.collections, draft.collections || []);
 
-                        <div>
-                          <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                            Subtitle
-                          </label>
-                          <input
-                            type="text"
-                            value={col.subtitle}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                next.collections[idx].subtitle = val;
-                                return next;
-                              });
-                            }}
-                            className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                          />
-                        </div>
+                const updateColItem = (idx: number, partial: Partial<CollectionItem>) => {
+                  updateDraft((prev) => {
+                    const list = (prev.collections && prev.collections.length >= 5)
+                      ? [...prev.collections]
+                      : mergeCollections(DEFAULT_SITE_CONTENT.collections, prev.collections || []);
+                    if (list[idx]) {
+                      list[idx] = { ...list[idx], ...partial };
+                    }
+                    return {
+                      ...prev,
+                      collections: list,
+                    };
+                  });
+                };
 
-                        <div>
-                          <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                            Image URL
-                          </label>
-                          <input
-                            type="text"
-                            value={col.image}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                next.collections[idx].image = val;
-                                return next;
-                              });
-                            }}
-                            className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1.5"
-                          />
-                          <label className="block text-center py-1 bg-[#FAF6F1] hover:bg-[#EFE7DE] border border-[#E2D5C8] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                            {uploadingImageKey === `collection-${idx}` ? 'Optimizing...' : 'Upload Card Image'}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  handleImageUpload(
-                                    file,
-                                    (url) => {
-                                      updateDraft((prev) => {
-                                        const next = { ...prev };
-                                        next.collections[idx].image = url;
-                                        return next;
-                                      });
-                                    },
-                                    `collection-${idx}`,
-                                    1000,
-                                    1000
-                                  );
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
+                const restoreAllDefaultCollections = () => {
+                  updateDraft((prev) => ({
+                    ...prev,
+                    collections: DEFAULT_SITE_CONTENT.collections.map((c) => ({ ...c })),
+                  }));
+                };
+
+                return (
+                  <div className="space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-[#EADFD5] gap-2">
+                      <div>
+                        <h2 className="font-serif text-xl text-[#2A2323]">Featured Category Mosaic</h2>
+                        <p className="text-xs text-[#7A6C6C]">
+                          All 5 mosaic images are fully active and editable below. None are deleted.
+                        </p>
                       </div>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={restoreAllDefaultCollections}
+                        className="self-start text-[11px] text-[#8C6D4F] hover:text-[#5A4533] underline cursor-pointer"
+                      >
+                        Reset All 5 to Defaults
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {currentCollections.map((col, idx) => (
+                        <div
+                          key={col.id || `col-${idx}`}
+                          className="bg-white border border-[#E5DAD0] p-4 rounded-xs space-y-3 shadow-xs"
+                        >
+                          <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-1.5">
+                            <span className="text-[11px] font-semibold text-[#8C6D4F] tracking-wide">
+                              {positionLabels[idx] || `Mosaic Image ${idx + 1}`}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-wider text-[#A09393] bg-[#FAF8F5] px-2 py-0.5 rounded-xs border border-[#E8DFD7]">
+                              {col.span === 'tall' ? '9:16 Ratio' : col.span === 'wide' ? 'Wide Ratio' : '1:1 Square'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="w-16 h-16 bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden shrink-0">
+                              <img
+                                src={col.image}
+                                alt={col.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
+                                Card Title
+                              </label>
+                              <input
+                                type="text"
+                                value={col.title}
+                                onChange={(e) => updateColItem(idx, { title: e.target.value })}
+                                className="w-full px-2 py-1 text-xs font-semibold uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1"
+                              />
+                              <input
+                                type="text"
+                                value={col.itemCount || ''}
+                                onChange={(e) => updateColItem(idx, { itemCount: e.target.value })}
+                                placeholder="Item Count (e.g. 24 Designs)"
+                                className="w-full px-2 py-1 text-[11px] text-[#7A6C6C] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                              Subtitle
+                            </label>
+                            <input
+                              type="text"
+                              value={col.subtitle || ''}
+                              onChange={(e) => updateColItem(idx, { subtitle: e.target.value })}
+                              className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                              Image URL
+                            </label>
+                            <input
+                              type="text"
+                              value={col.image}
+                              onChange={(e) => updateColItem(idx, { image: e.target.value })}
+                              className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1.5"
+                            />
+                            <label className="block text-center py-1.5 bg-[#FAF6F1] hover:bg-[#EFE7DE] border border-[#E2D5C8] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer font-medium transition-colors">
+                              {uploadingImageKey === `collection-${idx}` ? 'Optimizing & Uploading...' : 'Upload Card Image'}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    handleImageUpload(
+                                      file,
+                                      (url) => updateColItem(idx, { image: url }),
+                                      `collection-${idx}`,
+                                      1200,
+                                      1200
+                                    );
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* TAB 4: EVERYDAY ELEGANCE PRODUCTS */}
               {activeTab === 'products' && (

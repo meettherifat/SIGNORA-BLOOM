@@ -166,6 +166,114 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/assets', express.static(path.join(process.cwd(), 'public', 'assets')));
+
+// Helper for deep merging hero slides on the server
+function mergeHeroSlidesServer(baseSlides: any[], incomingSlides?: any[]) {
+  if (!Array.isArray(incomingSlides) || incomingSlides.length === 0) {
+    return Array.isArray(baseSlides) ? baseSlides : [];
+  }
+  const slideMap = new Map<number, any>();
+  if (Array.isArray(baseSlides)) {
+    baseSlides.forEach((s, idx) => {
+      const id = typeof s.id === 'number' ? s.id : idx;
+      slideMap.set(id, { ...s });
+    });
+  }
+  incomingSlides.forEach((inc, idx) => {
+    if (!inc || typeof inc !== 'object') return;
+    const slideId = typeof inc.id === 'number' ? inc.id : idx;
+    const existing = slideMap.get(slideId) || (Array.isArray(baseSlides) ? baseSlides[idx] : null) || {
+      id: slideId,
+      image: '',
+      alt: '',
+      headline: '',
+      buttonText: 'SHOP NOW',
+    };
+    slideMap.set(slideId, {
+      ...existing,
+      id: slideId,
+      image: typeof inc.image === 'string' && inc.image.trim() !== '' ? inc.image : existing.image,
+      alt: typeof inc.alt === 'string' ? inc.alt : existing.alt,
+      headline: typeof inc.headline === 'string' ? inc.headline : existing.headline,
+      buttonText: typeof inc.buttonText === 'string' ? inc.buttonText : existing.buttonText,
+    });
+  });
+
+  return Array.from(slideMap.values());
+}
+
+// Deep merges collection cards preserving all 5 default cards
+function mergeCollectionsServer(existingCollections?: any[], incomingCollections?: any[]) {
+  const defaultCollections = [
+    {
+      id: 'fine-rings',
+      title: 'FINE RINGS',
+      subtitle: 'Architectural bands & diamond pavé silhouettes',
+      category: 'rings',
+      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85',
+      itemCount: '24 Designs',
+      span: 'tall',
+    },
+    {
+      id: 'sculptural-bracelets',
+      title: 'SCULPTURAL BRACELETS',
+      subtitle: 'Torques, curb links & everyday wrist cuffs',
+      category: 'bracelets',
+      image: 'https://images.unsplash.com/photo-1611591475879-f191b702ec49?auto=format&fit=crop&w=800&q=85',
+      itemCount: '18 Designs',
+      span: 'square',
+    },
+    {
+      id: 'drop-hoop-earrings',
+      title: 'DROP & HOOP EARRINGS',
+      subtitle: 'Light-catching chandeliers & modern huggies',
+      category: 'earrings',
+      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=800&q=85',
+      itemCount: '32 Designs',
+      span: 'square',
+    },
+    {
+      id: 'medallion-necklaces',
+      title: 'MEDALLION NECKLACES',
+      subtitle: 'Layering chains & coin pendants',
+      category: 'necklaces',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85',
+      itemCount: '16 Designs',
+      span: 'wide',
+    },
+    {
+      id: 'shop-charms',
+      title: 'SHOP CHARMS',
+      subtitle: 'Sculpted charms & everyday statement pendants',
+      category: 'charms',
+      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=85',
+      itemCount: '20 Designs',
+      span: 'tall',
+    },
+  ];
+
+  const colMap = new Map<string, any>();
+  defaultCollections.forEach((c) => colMap.set(c.id, { ...c }));
+
+  if (Array.isArray(existingCollections)) {
+    existingCollections.forEach((c) => {
+      if (c && c.id) {
+        colMap.set(c.id, { ...(colMap.get(c.id) || {}), ...c });
+      }
+    });
+  }
+
+  if (Array.isArray(incomingCollections)) {
+    incomingCollections.forEach((c) => {
+      if (c && c.id) {
+        colMap.set(c.id, { ...(colMap.get(c.id) || {}), ...c });
+      }
+    });
+  }
+
+  return Array.from(colMap.values());
+}
 
 // Constant-time comparison helper
 function timingSafeCheck(a: string, b: string): boolean {
@@ -414,10 +522,55 @@ app.post('/api/content', requireAdminAuth, (req: Request, res: Response) => {
       return;
     }
 
-    fs.writeFileSync(CONTENT_FILE, JSON.stringify(content, null, 2), 'utf-8');
+    // Read existing content if present to merge
+    let existingContent: any = {};
+    if (fs.existsSync(CONTENT_FILE)) {
+      try {
+        existingContent = JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf-8'));
+      } catch (err) {
+        console.warn('Could not parse existing content file, starting fresh merge:', err);
+      }
+    }
+
+    // Deep merge to ensure updating one or two hero slides never overwrites the rest
+    const mergedContent = {
+      ...existingContent,
+      ...content,
+      brand: { ...(existingContent.brand || {}), ...(content.brand || {}) },
+      hero: {
+        ...(existingContent.hero || {}),
+        ...(content.hero || {}),
+        slides: mergeHeroSlidesServer(existingContent.hero?.slides, content.hero?.slides),
+      },
+      collections: mergeCollectionsServer(existingContent.collections, content.collections),
+      editorial: {
+        ...(existingContent.editorial || {}),
+        ...(content.editorial || {}),
+        tabs: Array.isArray(content.editorial?.tabs) && content.editorial.tabs.length > 0
+          ? content.editorial.tabs
+          : (existingContent.editorial?.tabs || []),
+      },
+      giftSection: {
+        ...(existingContent.giftSection || {}),
+        ...(content.giftSection || {}),
+      },
+      products: Array.isArray(content.products) && content.products.length > 0
+        ? content.products
+        : (existingContent.products || []),
+      footer: { ...(existingContent.footer || {}), ...(content.footer || {}) },
+    };
+
+    fs.writeFileSync(CONTENT_FILE, JSON.stringify(mergedContent, null, 2), 'utf-8');
     res.json({
       success: true,
-      message: 'Site changes published successfully.',
+      message: 'Site changes merged and published successfully.',
+      content: mergedContent,
+      verifiedSlides: mergedContent.hero?.slides?.map((s: any) => ({
+        id: s.id,
+        image: s.image,
+        alt: s.alt,
+        headline: s.headline,
+      })),
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

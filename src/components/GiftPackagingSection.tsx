@@ -106,11 +106,8 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
           {/* ------------------------------------------------------- */}
           <div className="order-1 md:order-2 md:col-span-6 flex justify-center items-end w-full">
             <div
-              onClick={onOpenGiftInquiry}
-              role="button"
-              tabIndex={0}
-              aria-label="Signature Gift Box - Click for bespoke gifting inquiry"
-              className="relative w-full max-w-[340px] sm:max-w-[440px] md:max-w-[500px] lg:max-w-[540px] aspect-square cursor-pointer group transition-transform duration-500 hover:scale-[1.015] rounded-t-[5px] rounded-b-none overflow-hidden"
+              aria-label="Signature Gift Box"
+              className="relative w-full max-w-[340px] sm:max-w-[440px] md:max-w-[500px] lg:max-w-[540px] aspect-square select-none cursor-default rounded-t-[5px] rounded-b-none overflow-hidden"
               style={{
                 /* Soft, subtle ambient shadow matching high-end editorial lighting */
                 boxShadow:

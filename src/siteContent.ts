@@ -1,3 +1,13 @@
+export interface CollectionItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  category: string;
+  image: string;
+  itemCount: string;
+  span?: string;
+}
+
 export interface SiteContent {
   brand: {
     name: string;
@@ -16,15 +26,7 @@ export interface SiteContent {
       buttonText: string;
     }[];
   };
-  collections: {
-    id: string;
-    title: string;
-    subtitle: string;
-    category: string;
-    image: string;
-    itemCount: string;
-    span?: string;
-  }[];
+  collections: CollectionItem[];
   editorial: {
     tabs: {
       id: string;
@@ -134,6 +136,15 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85',
       itemCount: '16 Designs',
       span: 'wide',
+    },
+    {
+      id: 'shop-charms',
+      title: 'SHOP CHARMS',
+      subtitle: 'Sculpted charms & everyday statement pendants',
+      category: 'charms',
+      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=85',
+      itemCount: '20 Designs',
+      span: 'tall',
     },
   ],
   editorial: {
