@@ -24,12 +24,12 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = () => {
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || {
     id: 'beauty-ingenuity',
-    tabLabel: 'BEAUTY & INGENUITY',
-    headline: 'Beauty & Ingenuity',
-    description: '',
+    tabLabel: 'THE SIGNORA BLOOM EDIT',
+    headline: 'The Signora Bloom Edit',
+    description: 'Discover thoughtfully selected accessories designed to make everyday styling feel a little more special. From elegant jewelry to expressive finishing touches, Signora Bloom brings together pieces made for modern, effortless elegance.',
     mainImage: '',
     insetDetailImage: detailInsetImg,
-    buttonLabel: 'SHOP NOW',
+    buttonLabel: 'DISCOVER SIGNORA',
   };
 
   return (

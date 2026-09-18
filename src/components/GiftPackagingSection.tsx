@@ -10,10 +10,10 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
   const gift = content?.giftSection;
 
   const defaultFeatures = [
-    { number: '01', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
-    { number: '02', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
-    { number: '03', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
-    { number: '04', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
+    { number: '01', title: 'CURATED WITH CARE', description: "A thoughtfully selected collection of women's accessories." },
+    { number: '02', title: 'EFFORTLESS STYLE', description: 'Pieces designed to complement everyday fashion.' },
+    { number: '03', title: 'BEAUTIFUL DETAILS', description: 'Intricate textures, elegant finishes and feminine designs.' },
+    { number: '04', title: 'VERSATILE ACCESSORIES', description: 'Easy-to-style pieces for different looks and occasions.' },
   ];
 
   const features = gift?.features && gift.features.length > 0 ? gift.features : defaultFeatures;
@@ -21,12 +21,12 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
   const f2 = features[1] || defaultFeatures[1];
   const f3 = features[2] || defaultFeatures[2];
   const f4 = features[3] || defaultFeatures[3];
-  const headline = gift?.headline || 'SURPRISE A LOVED ONE';
+  const headline = gift?.headline || 'WHY SIGNORA BLOOM';
 
   return (
     <section
       id="gift-packaging"
-      aria-label="Surprise A Loved One Gift Packaging"
+      aria-label="Why Signora Bloom Curated Accessories"
       className="w-full bg-[#826D5C] text-white pt-14 sm:pt-20 md:pt-24 pb-0 relative overflow-hidden select-none"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">

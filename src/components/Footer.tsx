@@ -28,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
 
         {/* Tagline */}
         <p className="font-serif text-xs sm:text-sm italic text-[#8E8080] mb-7">
-          Curated Accessories for Women · Beautiful Details, Effortless Style
+          {content?.brand?.tagline || 'A Curated Collection of Everyday Elegance.'}
         </p>
 
         {/* Navigation */}

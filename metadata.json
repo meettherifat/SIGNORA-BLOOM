@@ -1,6 +1,6 @@
 {
   "name": "SIGNORA BLOOM",
-  "description": "Curated accessories for women — an editorial brand showcase celebrating everyday elegance, fine craftsmanship, and timeless style.",
+  "description": "A Curated Collection of Everyday Elegance — thoughtfully selected women's accessories designed to bring effortless elegance to your everyday style.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -54,10 +54,10 @@ type ViewMode = 'edit' | 'split' | 'preview';
 type DeviceMode = 'mobile' | 'tablet' | 'desktop';
 
 const defaultFeatures = [
-  { number: '01', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
-  { number: '02', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
-  { number: '03', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
-  { number: '04', title: 'Viverra venenatis donec', description: 'Vestibulum ante ipsum primis in faucibus orci luctus' },
+  { number: '01', title: 'CURATED WITH CARE', description: "A thoughtfully selected collection of women's accessories." },
+  { number: '02', title: 'EFFORTLESS STYLE', description: 'Pieces designed to complement everyday fashion.' },
+  { number: '03', title: 'BEAUTIFUL DETAILS', description: 'Intricate textures, elegant finishes and feminine designs.' },
+  { number: '04', title: 'VERSATILE ACCESSORIES', description: 'Easy-to-style pieces for different looks and occasions.' },
 ];
 
 // Helper ensuring all 5 collections, 4 features, and everyday elegance are always present with no missing positions

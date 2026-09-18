@@ -18,27 +18,27 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
 
   const colRings = collections.find((c) => c.id === 'fine-rings') || collections[0] || {
     id: 'fine-rings',
-    title: 'FINE RINGS',
+    title: 'RINGS',
     image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85',
   };
   const colBracelets = collections.find((c) => c.id === 'sculptural-bracelets') || collections[1] || {
     id: 'sculptural-bracelets',
-    title: 'SCULPTURAL BRACELETS',
+    title: 'BANGLES & BRACELETS',
     image: braceletsSquareImg,
   };
   const colNecklaces = collections.find((c) => c.id === 'medallion-necklaces') || collections[3] || {
     id: 'medallion-necklaces',
-    title: 'MEDALLION NECKLACES',
+    title: 'JEWELRY',
     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85',
   };
   const colEarrings = collections.find((c) => c.id === 'drop-hoop-earrings') || collections[2] || {
     id: 'drop-hoop-earrings',
-    title: 'DROP & HOOP EARRINGS',
+    title: 'EARRINGS',
     image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=800&q=85',
   };
   const colCharms = collections.find((c) => c.id === 'shop-charms') || collections[4] || {
     id: 'shop-charms',
-    title: 'SHOP CHARMS',
+    title: "WOMEN'S ACCESSORIES",
     image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=85',
   };
 

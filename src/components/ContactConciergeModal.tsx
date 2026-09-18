@@ -83,10 +83,10 @@ export const ContactConciergeModal: React.FC<ContactConciergeModalProps> = ({
                 SIGNORA BLOOM
               </span>
               <h3 className="font-serif text-2xl sm:text-3xl text-[#332B2B] font-light">
-                Atelier Inquiries & Contact
+                Signora Bloom Inquiries & Customer Care
               </h3>
               <p className="text-xs text-[#736767] mt-2 font-sans">
-                Connect with our team regarding private consultations, archive details, or styling guidance.
+                Connect with our team regarding collection details, styling questions, or order inquiries.
               </p>
             </div>
 

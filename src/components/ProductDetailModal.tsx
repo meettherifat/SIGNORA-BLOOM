@@ -55,7 +55,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         <div className="md:w-1/2 p-6 sm:p-8 flex flex-col justify-between space-y-6">
           <div>
             <span className="text-[10px] tracking-[0.24em] uppercase text-[#736767] block mb-2">
-              SIGNORA BLOOM · EDITORIAL ARCHIVE
+              SIGNORA BLOOM · CURATED COLLECTION
             </span>
 
             <h3 className="font-serif text-2xl sm:text-3xl font-light text-[#332B2B] leading-tight mb-2">
@@ -73,13 +73,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <div className="space-y-2 pt-4 border-t border-[#EDE4D9] text-xs text-[#736767]">
               <div>
                 <span className="font-medium text-[#332B2B] uppercase tracking-wider text-[10px] block">
-                  Materials
+                  Finishing & Details
                 </span>
                 <span>{accessory.materials.join(', ')}</span>
               </div>
               <div className="pt-2">
                 <span className="font-medium text-[#332B2B] uppercase tracking-wider text-[10px] block">
-                  Atelier Craftsmanship
+                  Curated Styling
                 </span>
                 <span>{accessory.craftsmanship}</span>
               </div>
