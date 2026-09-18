@@ -1,14 +1,20 @@
 import React from 'react';
 import braceletsSquareImg from '../assets/images/shop_bracelets_square_1789491269438.jpg';
 import { useSiteContent } from '../context/SiteContentContext';
+import { ImageWithSkeleton } from './ui/ImageWithSkeleton';
+import { FeaturedCollectionsSkeleton } from './skeletons/FeaturedCollectionsSkeleton';
 
 interface FeaturedCollectionsProps {
   onSelectCategory?: (category: string) => void;
 }
 
-export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
-  const { content } = useSiteContent();
+export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({ onSelectCategory }) => {
+  const { content, isLoading } = useSiteContent();
   const collections = content?.collections || [];
+
+  if (isLoading) {
+    return <FeaturedCollectionsSkeleton />;
+  }
 
   const colRings = collections.find((c) => c.id === 'fine-rings') || collections[0] || {
     id: 'fine-rings',
@@ -52,21 +58,30 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           {/* ========================================================== */}
           <div 
             id="mosaic-rings"
-            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
+            role={onSelectCategory ? 'button' : undefined}
+            tabIndex={onSelectCategory ? 0 : undefined}
+            onClick={() => onSelectCategory?.('fine-rings')}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
+                e.preventDefault();
+                onSelectCategory('fine-rings');
+              }
+            }}
+            data-cursor="image"
+            data-cursor-text="EXPLORE"
+            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-pointer focus:outline-hidden"
           >
-            {/* Aspect Ratio 9:16 */}
-            <div className="relative w-full h-full aspect-[9/16] overflow-hidden">
-              <img
-                src={colRings.image}
-                alt={colRings.title || 'Fine Rings'}
-                className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=85';
-                }}
-              />
-            </div>
+            {/* Aspect Ratio 9:16 with skeleton loader */}
+            <ImageWithSkeleton
+              id="mosaic-img-rings"
+              src={colRings.image}
+              alt={colRings.title || 'Fine Rings'}
+              aspectRatio="9/16"
+              skeletonLabel="FINE RINGS"
+              className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
+              containerClassName="w-full h-full aspect-[9/16]"
+              fallbackSrc="https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=85"
+            />
           </div>
 
           {/* ========================================================== */}
@@ -78,17 +93,28 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
             {/* TOP: Image 2 -> 1:1 RATIO (SQUARE) */}
             <div 
               id="mosaic-bracelets"
-              className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs w-full aspect-square shrink-0 cursor-default"
+              role={onSelectCategory ? 'button' : undefined}
+              tabIndex={onSelectCategory ? 0 : undefined}
+              onClick={() => onSelectCategory?.('sculptural-bracelets')}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
+                  e.preventDefault();
+                  onSelectCategory('sculptural-bracelets');
+                }
+              }}
+              data-cursor="image"
+              data-cursor-text="EXPLORE"
+              className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs w-full aspect-square shrink-0 cursor-pointer focus:outline-hidden"
             >
-              <img
+              <ImageWithSkeleton
+                id="mosaic-img-bracelets"
                 src={colBracelets.image}
                 alt={colBracelets.title || 'Sculptural Bracelets'}
+                aspectRatio="1/1"
+                skeletonLabel="SCULPTURAL BRACELETS"
                 className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85';
-                }}
+                containerClassName="w-full h-full aspect-square"
+                fallbackSrc="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85"
               />
             </div>
 
@@ -98,39 +124,55 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
               {/* Image 3 */}
               <div
                 id="mosaic-necklaces"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default"
+                role={onSelectCategory ? 'button' : undefined}
+                tabIndex={onSelectCategory ? 0 : undefined}
+                onClick={() => onSelectCategory?.('medallion-necklaces')}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
+                    e.preventDefault();
+                    onSelectCategory('medallion-necklaces');
+                  }
+                }}
+                data-cursor="image"
+                data-cursor-text="EXPLORE"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-pointer focus:outline-hidden"
               >
-                <div className="relative w-full h-full min-h-[140px] sm:min-h-[180px] overflow-hidden">
-                  <img
-                    src={colNecklaces.image}
-                    alt={colNecklaces.title || 'Medallion Necklaces'}
-                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=85';
-                    }}
-                  />
-                </div>
+                <ImageWithSkeleton
+                  id="mosaic-img-necklaces"
+                  src={colNecklaces.image}
+                  alt={colNecklaces.title || 'Medallion Necklaces'}
+                  skeletonLabel="NECKLACES"
+                  className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
+                  containerClassName="w-full h-full min-h-[140px] sm:min-h-[180px]"
+                  fallbackSrc="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=85"
+                />
               </div>
 
               {/* Image 4 */}
               <div
                 id="mosaic-earrings"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default"
+                role={onSelectCategory ? 'button' : undefined}
+                tabIndex={onSelectCategory ? 0 : undefined}
+                onClick={() => onSelectCategory?.('drop-hoop-earrings')}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
+                    e.preventDefault();
+                    onSelectCategory('drop-hoop-earrings');
+                  }
+                }}
+                data-cursor="image"
+                data-cursor-text="EXPLORE"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-pointer focus:outline-hidden"
               >
-                <div className="relative w-full h-full min-h-[140px] sm:min-h-[180px] overflow-hidden">
-                  <img
-                    src={colEarrings.image}
-                    alt={colEarrings.title || 'Drop and Hoop Earrings'}
-                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=85';
-                    }}
-                  />
-                </div>
+                <ImageWithSkeleton
+                  id="mosaic-img-earrings"
+                  src={colEarrings.image}
+                  alt={colEarrings.title || 'Drop and Hoop Earrings'}
+                  skeletonLabel="EARRINGS"
+                  className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
+                  containerClassName="w-full h-full min-h-[140px] sm:min-h-[180px]"
+                  fallbackSrc="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=85"
+                />
               </div>
 
             </div>
@@ -142,21 +184,30 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           {/* ========================================================== */}
           <div 
             id="mosaic-charms"
-            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
+            role={onSelectCategory ? 'button' : undefined}
+            tabIndex={onSelectCategory ? 0 : undefined}
+            onClick={() => onSelectCategory?.('shop-charms')}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && onSelectCategory) {
+                e.preventDefault();
+                onSelectCategory('shop-charms');
+              }
+            }}
+            data-cursor="image"
+            data-cursor-text="EXPLORE"
+            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-pointer focus:outline-hidden"
           >
-            {/* Aspect Ratio 9:16 */}
-            <div className="relative w-full h-full aspect-[9/16] overflow-hidden">
-              <img
-                src={colCharms.image}
-                alt={colCharms.title || 'Shop Charms'}
-                className="w-full h-full object-cover object-top transition-transform duration-700 ease-out hover:scale-102"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=85';
-                }}
-              />
-            </div>
+            {/* Aspect Ratio 9:16 with skeleton loader */}
+            <ImageWithSkeleton
+              id="mosaic-img-charms"
+              src={colCharms.image}
+              alt={colCharms.title || 'Shop Charms'}
+              aspectRatio="9/16"
+              skeletonLabel="SHOP CHARMS"
+              className="w-full h-full object-cover object-top transition-transform duration-700 ease-out hover:scale-102"
+              containerClassName="w-full h-full aspect-[9/16]"
+              fallbackSrc="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=85"
+            />
           </div>
 
         </div>

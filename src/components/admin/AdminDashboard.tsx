@@ -32,6 +32,7 @@ import { SiteContent, DEFAULT_SITE_CONTENT, CollectionItem } from '../../siteCon
 import { useSiteContent, VerifiedHeroSlide, mergeCollections } from '../../context/SiteContentContext';
 import { safeParseResponseJson } from '../../utils/security';
 import { compressImageFile } from '../../utils/storageDb';
+import { ImageUpdateField } from './ImageUpdateField';
 
 // Import public components for the real-time live preview
 import { Header } from '../Header';
@@ -41,6 +42,7 @@ import { EverydayElegance } from '../EverydayElegance';
 import { EditorialStoryTabs } from '../EditorialStoryTabs';
 import { GiftPackagingSection } from '../GiftPackagingSection';
 import { Footer } from '../Footer';
+import { FadeInSection } from '../FadeInSection';
 
 interface AdminDashboardProps {
   token: string;
@@ -54,6 +56,13 @@ type TabKey = 'hero' | 'editorial' | 'collections' | 'products' | 'gift' | 'bran
 type ViewMode = 'edit' | 'split' | 'preview';
 type DeviceMode = 'mobile' | 'tablet' | 'desktop';
 
+// Helper ensuring all 5 collections are always present with no missing positions
+const normalizeDraftContent = (rawContent: SiteContent): SiteContent => {
+  const cloned: SiteContent = JSON.parse(JSON.stringify(rawContent || DEFAULT_SITE_CONTENT));
+  cloned.collections = mergeCollections(DEFAULT_SITE_CONTENT.collections, cloned.collections || []);
+  return cloned;
+};
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   token,
   user,
@@ -63,8 +72,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const { content, updateContent, saveContentToServer, resetContentOnServer } = useSiteContent();
 
-  // Local draft state for editing before publishing
-  const [draft, setDraft] = useState<SiteContent>(JSON.parse(JSON.stringify(content)));
+  // Local draft state for editing before publishing (guaranteed 5/5 collections)
+  const [draft, setDraft] = useState<SiteContent>(() => normalizeDraftContent(content));
   const [activeTab, setActiveTab] = useState<TabKey>('hero');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
@@ -79,7 +88,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Sync with incoming saved content if user hasn't made unsaved modifications
   useEffect(() => {
     if (!hasUnsavedChanges) {
-      setDraft(JSON.parse(JSON.stringify(content)));
+      setDraft(normalizeDraftContent(content));
     }
   }, [content, hasUnsavedChanges]);
 
@@ -732,69 +741,30 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                           </span>
                         </div>
 
-                        {/* Image Preview & URL Input */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                          <div className="sm:col-span-4 aspect-[16/9] bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden relative">
-                            <img
-                              key={`${slide.id}-${slide.image}`}
-                              src={slide.image}
-                              alt={slide.alt || `Slide ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = '/assets/images/jewelry_hero_clean_1_1789492829951.jpg';
-                              }}
-                            />
-                          </div>
-
-                          <div className="sm:col-span-8 space-y-2">
-                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium">
-                              Image Source URL or Local Upload
-                            </label>
-                            <input
-                              type="text"
-                              value={slide.image}
-                              onChange={(e) => {
-                                const newUrl = e.target.value;
-                                updateHeroSlide(idx, { image: newUrl });
-                              }}
-                              placeholder="https://... or /assets/..."
-                              className="w-full px-3 py-2 text-xs bg-[#FAF8F5] border border-[#E0D5CA] rounded-xs text-[#2A2323] focus:border-[#2A2323] outline-none"
-                            />
-
-                            {/* Upload from file */}
-                            <div className="flex items-center gap-2 pt-1">
-                              <label className="px-3 py-1.5 bg-[#F0EBE5] hover:bg-[#E5DFD7] text-[#3A3232] text-[10px] uppercase tracking-wider rounded-xs cursor-pointer flex items-center gap-1.5 transition-colors">
-                                {uploadingImageKey === `hero-${idx}` ? (
-                                  <div className="w-3 h-3 border-2 border-[#3A3232] border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <Upload className="w-3 h-3" />
-                                )}
-                                <span>{uploadingImageKey === `hero-${idx}` ? 'Optimizing...' : 'Upload Image File'}</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      handleImageUpload(
-                                        file,
-                                        (url) => {
-                                          updateHeroSlide(idx, { image: url });
-                                        },
-                                        `hero-${idx}`,
-                                        1920,
-                                        1080
-                                      );
-                                    }
-                                  }}
-                                />
-                              </label>
-                              <span className="text-[10px] text-[#8E8080]">Auto-optimized for web (16:9)</span>
-                            </div>
-                          </div>
-                        </div>
+                        {/* Image Preview & URL Input with dedicated Update/Upload buttons */}
+                        <ImageUpdateField
+                          id={`hero-slide-img-${idx}`}
+                          label={`Hero Slide #${idx + 1} Image`}
+                          value={slide.image}
+                          onChange={(newUrl) => updateHeroSlide(idx, { image: newUrl })}
+                          onUpload={(file) =>
+                            handleImageUpload(
+                              file,
+                              (url) => {
+                                updateHeroSlide(idx, { image: url });
+                              },
+                              `hero-${idx}`,
+                              1920,
+                              1080
+                            )
+                          }
+                          isUploading={uploadingImageKey === `hero-${idx}`}
+                          aspectRatio="16/9"
+                          aspectLabel="16:9 Landscape"
+                          recommendedDimensions="1920 × 1080px (16:9 full-width)"
+                          defaultUrl={DEFAULT_SITE_CONTENT.hero.slides[idx]?.image}
+                          isLiveSynced={isSyncedWithLive}
+                        />
 
                         {/* Headline & Button Text */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -929,117 +899,77 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                         />
                       </div>
 
-                      {/* Main 3:4 Image & Inset 1:1 Image */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                        
+                      {/* Main 3:4 Image & Inset 1:1 Image with Dedicated Update/Upload Controls */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                         {/* 3:4 Main Image */}
-                        <div className="p-3 bg-[#FAF8F5] border border-[#E8DFD5] rounded-xs space-y-2">
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-[#4A3F3F]">
-                            Main Portrait Image (3:4 Ratio)
-                          </span>
-                          <div className="aspect-[3/4] w-24 bg-[#EFE8DF] overflow-hidden rounded-xs mx-auto border border-[#D8CEBF]">
-                            <img
-                              src={tab.mainImage}
-                              alt="Main Preview"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <input
-                            type="text"
-                            value={tab.mainImage}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                next.editorial.tabs[idx].mainImage = val;
-                                return next;
-                              });
-                            }}
-                            placeholder="Image URL"
-                            className="w-full px-2 py-1 text-[11px] bg-white border border-[#D8CEBF] rounded-xs outline-none"
-                          />
-                          <label className="block text-center py-1 bg-white hover:bg-[#F3ECE5] border border-[#D8CEBF] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                            {uploadingImageKey === `editorial-main-${idx}` ? 'Optimizing...' : 'Upload 3:4 File'}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  handleImageUpload(
-                                    file,
-                                    (url) => {
-                                      updateDraft((prev) => {
-                                        const next = { ...prev };
-                                        next.editorial.tabs[idx].mainImage = url;
-                                        return next;
-                                      });
-                                    },
-                                    `editorial-main-${idx}`,
-                                    1200,
-                                    1600
-                                  );
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
+                        <ImageUpdateField
+                          id={`editorial-main-img-${idx}`}
+                          label="Main Portrait Image (3:4 Ratio)"
+                          value={tab.mainImage}
+                          onChange={(newUrl) => {
+                            updateDraft((prev) => {
+                              const next = { ...prev };
+                              next.editorial.tabs[idx].mainImage = newUrl;
+                              return next;
+                            });
+                          }}
+                          onUpload={(file) => {
+                            handleImageUpload(
+                              file,
+                              (url) => {
+                                updateDraft((prev) => {
+                                  const next = { ...prev };
+                                  next.editorial.tabs[idx].mainImage = url;
+                                  return next;
+                                });
+                              },
+                              `editorial-main-${idx}`,
+                              1200,
+                              1600
+                            );
+                          }}
+                          isUploading={uploadingImageKey === `editorial-main-${idx}`}
+                          aspectRatio="3/4"
+                          aspectLabel="3:4 Portrait"
+                          recommendedDimensions="1200 × 1600px"
+                          defaultUrl={DEFAULT_SITE_CONTENT.editorial.tabs[idx]?.mainImage}
+                          isLiveSynced={content.editorial?.tabs?.[idx]?.mainImage === tab.mainImage}
+                        />
 
                         {/* 1:1 Inset Detail Image */}
-                        <div className="p-3 bg-[#FAF8F5] border border-[#E8DFD5] rounded-xs space-y-2">
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-[#4A3F3F]">
-                            Small Inset Detail Image (1:1 Ratio)
-                          </span>
-                          <div className="aspect-square w-20 bg-[#EFE8DF] overflow-hidden rounded-xs mx-auto border border-[#D8CEBF]">
-                            <img
-                              src={tab.insetDetailImage}
-                              alt="Detail Preview"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <input
-                            type="text"
-                            value={tab.insetDetailImage}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateDraft((prev) => {
-                                const next = { ...prev };
-                                next.editorial.tabs[idx].insetDetailImage = val;
-                                return next;
-                              });
-                            }}
-                            placeholder="Image URL"
-                            className="w-full px-2 py-1 text-[11px] bg-white border border-[#D8CEBF] rounded-xs outline-none"
-                          />
-                          <label className="block text-center py-1 bg-white hover:bg-[#F3ECE5] border border-[#D8CEBF] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                            {uploadingImageKey === `editorial-inset-${idx}` ? 'Optimizing...' : 'Upload 1:1 Square File'}
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  handleImageUpload(
-                                    file,
-                                    (url) => {
-                                      updateDraft((prev) => {
-                                        const next = { ...prev };
-                                        next.editorial.tabs[idx].insetDetailImage = url;
-                                        return next;
-                                      });
-                                    },
-                                    `editorial-inset-${idx}`,
-                                    800,
-                                    800
-                                  );
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
-
+                        <ImageUpdateField
+                          id={`editorial-inset-img-${idx}`}
+                          label="Small Inset Detail Image (1:1 Ratio)"
+                          value={tab.insetDetailImage}
+                          onChange={(newUrl) => {
+                            updateDraft((prev) => {
+                              const next = { ...prev };
+                              next.editorial.tabs[idx].insetDetailImage = newUrl;
+                              return next;
+                            });
+                          }}
+                          onUpload={(file) => {
+                            handleImageUpload(
+                              file,
+                              (url) => {
+                                updateDraft((prev) => {
+                                  const next = { ...prev };
+                                  next.editorial.tabs[idx].insetDetailImage = url;
+                                  return next;
+                                });
+                              },
+                              `editorial-inset-${idx}`,
+                              800,
+                              800
+                            );
+                          }}
+                          isUploading={uploadingImageKey === `editorial-inset-${idx}`}
+                          aspectRatio="1/1"
+                          aspectLabel="1:1 Square"
+                          recommendedDimensions="800 × 800px"
+                          defaultUrl={DEFAULT_SITE_CONTENT.editorial.tabs[idx]?.insetDetailImage}
+                          isLiveSynced={content.editorial?.tabs?.[idx]?.insetDetailImage === tab.insetDetailImage}
+                        />
                       </div>
 
                       {/* Button CTA text */}
@@ -1110,106 +1040,109 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                       <div>
                         <h2 className="font-serif text-xl text-[#2A2323]">Featured Category Mosaic</h2>
                         <p className="text-xs text-[#7A6C6C]">
-                          All 5 mosaic images are fully active and editable below. None are deleted.
+                          All 5 mosaic images are fully active and editable below. Every position includes a dedicated Update and Upload button.
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={restoreAllDefaultCollections}
-                        className="self-start text-[11px] text-[#8C6D4F] hover:text-[#5A4533] underline cursor-pointer"
-                      >
-                        Reset All 5 to Defaults
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase font-mono tracking-wider bg-[#EAF5EC] text-[#256837] px-2.5 py-1 rounded-xs border border-[#BBE2C3] font-semibold">
+                          5 of 5 Positions Active
+                        </span>
+                        <button
+                          type="button"
+                          onClick={restoreAllDefaultCollections}
+                          className="text-[11px] text-[#8C6D4F] hover:text-[#5A4533] underline cursor-pointer"
+                        >
+                          Reset All 5 to Defaults
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {currentCollections.map((col, idx) => (
-                        <div
-                          key={col.id || `col-${idx}`}
-                          className="bg-white border border-[#E5DAD0] p-4 rounded-xs space-y-3 shadow-xs"
-                        >
-                          <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-1.5">
-                            <span className="text-[11px] font-semibold text-[#8C6D4F] tracking-wide">
-                              {positionLabels[idx] || `Mosaic Image ${idx + 1}`}
-                            </span>
-                            <span className="text-[10px] uppercase tracking-wider text-[#A09393] bg-[#FAF8F5] px-2 py-0.5 rounded-xs border border-[#E8DFD7]">
-                              {col.span === 'tall' ? '9:16 Ratio' : col.span === 'wide' ? 'Wide Ratio' : '1:1 Square'}
-                            </span>
-                          </div>
+                      {currentCollections.map((col, idx) => {
+                        const isColTall = col.span === 'tall';
+                        const defaultCol = DEFAULT_SITE_CONTENT.collections[idx];
+                        const isSynced = content.collections?.[idx]?.image === col.image;
 
-                          <div className="flex items-center gap-3">
-                            <div className="w-16 h-16 bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden shrink-0">
-                              <img
-                                src={col.image}
-                                alt={col.title}
-                                className="w-full h-full object-cover"
-                              />
+                        return (
+                          <div
+                            key={col.id || `col-${idx}`}
+                            className="bg-white border border-[#E5DAD0] p-4 rounded-xs space-y-3.5 shadow-xs"
+                          >
+                            <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-1.5">
+                              <span className="text-[11px] font-semibold text-[#8C6D4F] tracking-wide">
+                                {positionLabels[idx] || `Mosaic Image ${idx + 1}`}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wider text-[#A09393] bg-[#FAF8F5] px-2 py-0.5 rounded-xs border border-[#E8DFD7]">
+                                {isColTall ? '9:16 Tall Mosaic' : col.span === 'wide' ? 'Wide Ratio' : '1:1 Square'}
+                              </span>
                             </div>
-                            <div className="flex-1">
-                              <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
-                                Card Title
-                              </label>
-                              <input
-                                type="text"
-                                value={col.title}
-                                onChange={(e) => updateColItem(idx, { title: e.target.value })}
-                                className="w-full px-2 py-1 text-xs font-semibold uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1"
-                              />
-                              <input
-                                type="text"
-                                value={col.itemCount || ''}
-                                onChange={(e) => updateColItem(idx, { itemCount: e.target.value })}
-                                placeholder="Item Count (e.g. 24 Designs)"
-                                className="w-full px-2 py-1 text-[11px] text-[#7A6C6C] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                              />
+
+                            {/* Card Titles & Item Count */}
+                            <div className="space-y-2">
+                              <div className="flex gap-2">
+                                <div className="w-2/3">
+                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
+                                    Card Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={col.title}
+                                    onChange={(e) => updateColItem(idx, { title: e.target.value })}
+                                    className="w-full px-2 py-1 text-xs font-semibold uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                                  />
+                                </div>
+                                <div className="w-1/3">
+                                  <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
+                                    Count Tag
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={col.itemCount || ''}
+                                    onChange={(e) => updateColItem(idx, { itemCount: e.target.value })}
+                                    placeholder="24 Designs"
+                                    className="w-full px-2 py-1 text-[11px] text-[#7A6C6C] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-0.5">
+                                  Subtitle
+                                </label>
+                                <input
+                                  type="text"
+                                  value={col.subtitle || ''}
+                                  onChange={(e) => updateColItem(idx, { subtitle: e.target.value })}
+                                  className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                                />
+                              </div>
                             </div>
-                          </div>
 
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                              Subtitle
-                            </label>
-                            <input
-                              type="text"
-                              value={col.subtitle || ''}
-                              onChange={(e) => updateColItem(idx, { subtitle: e.target.value })}
-                              className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
-                              Image URL
-                            </label>
-                            <input
-                              type="text"
+                            {/* Dedicated Image Update & Upload Control */}
+                            <ImageUpdateField
+                              id={`collection-img-${idx}`}
+                              label={`Mosaic ${idx + 1} Image`}
                               value={col.image}
-                              onChange={(e) => updateColItem(idx, { image: e.target.value })}
-                              className="w-full px-2 py-1 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs mb-1.5"
+                              onChange={(newUrl) => updateColItem(idx, { image: newUrl })}
+                              onUpload={(file) => {
+                                handleImageUpload(
+                                  file,
+                                  (url) => updateColItem(idx, { image: url }),
+                                  `collection-${idx}`,
+                                  isColTall ? 1080 : 1200,
+                                  isColTall ? 1920 : 1200
+                                );
+                              }}
+                              isUploading={uploadingImageKey === `collection-${idx}`}
+                              aspectRatio={isColTall ? '9/16' : '1/1'}
+                              aspectLabel={isColTall ? '9:16 Tall' : '1:1 Square'}
+                              recommendedDimensions={isColTall ? '800 × 1422px (9:16)' : '800 × 800px (1:1)'}
+                              defaultUrl={defaultCol?.image}
+                              isLiveSynced={isSynced}
                             />
-                            <label className="block text-center py-1.5 bg-[#FAF6F1] hover:bg-[#EFE7DE] border border-[#E2D5C8] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer font-medium transition-colors">
-                              {uploadingImageKey === `collection-${idx}` ? 'Optimizing & Uploading...' : 'Upload Card Image'}
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    handleImageUpload(
-                                      file,
-                                      (url) => updateColItem(idx, { image: url }),
-                                      `collection-${idx}`,
-                                      1200,
-                                      1200
-                                    );
-                                  }
-                                }}
-                              />
-                            </label>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -1231,129 +1164,165 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                     {draft.products.map((prod, idx) => (
                       <div
                         key={prod.id}
-                        className="bg-white border border-[#E5DAD0] p-4 rounded-xs shadow-xs"
+                        className="bg-white border border-[#E5DAD0] p-4 sm:p-5 rounded-xs shadow-xs space-y-4"
                       >
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                          
-                          {/* Image Thumbnail */}
-                          <div className="sm:col-span-2 aspect-square bg-[#FAF5F0] border border-[#E2D5C8] rounded-xs overflow-hidden">
-                            <img
-                              src={prod.image}
-                              alt={prod.name}
-                              className="w-full h-full object-cover"
-                            />
+                        <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-[#8C6D4F] tracking-wider uppercase font-mono">
+                              {prod.refCode || `PIECE #${idx + 1}`}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-wider text-[#736565] bg-[#FAF5F0] border border-[#E8DFD5] px-2 py-0.5 rounded-xs">
+                              {prod.categoryLabel || prod.category}
+                            </span>
                           </div>
+                          <span className="text-xs font-semibold text-[#2A2323]">
+                            {prod.price}
+                          </span>
+                        </div>
 
-                          {/* Details */}
-                          <div className="sm:col-span-6 space-y-2">
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                value={prod.name}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  updateDraft((prev) => {
-                                    const next = { ...prev };
-                                    next.products[idx].name = val;
-                                    return next;
-                                  });
-                                }}
-                                placeholder="Product Name"
-                                className="w-2/3 px-2 py-1 text-xs font-serif font-medium bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
-                              />
-                              <input
-                                type="text"
-                                value={prod.price}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  updateDraft((prev) => {
-                                    const next = { ...prev };
-                                    next.products[idx].price = val;
-                                    return next;
-                                  });
-                                }}
-                                placeholder="Price"
-                                className="w-1/3 px-2 py-1 text-xs font-semibold bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs text-[#2A2323]"
-                              />
-                            </div>
-
-                            <input
-                              type="text"
-                              value={prod.tagline}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                updateDraft((prev) => {
-                                  const next = { ...prev };
-                                  next.products[idx].tagline = val;
-                                  return next;
-                                });
-                              }}
-                              placeholder="Material / Craft Tagline"
-                              className="w-full px-2 py-1 text-[11px] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs text-[#665959]"
-                            />
-                          </div>
-
-                          {/* Badge & Image URL */}
-                          <div className="sm:col-span-4 space-y-2">
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                value={prod.badge || ''}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  updateDraft((prev) => {
-                                    const next = { ...prev };
-                                    next.products[idx].badge = val;
-                                    return next;
-                                  });
-                                }}
-                                placeholder="Badge (e.g. -14%, NEW)"
-                                className="w-1/2 px-2 py-1 text-[11px] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs uppercase tracking-wider"
-                              />
-                              <label className="w-1/2 text-center py-1 bg-[#FAF6F1] hover:bg-[#EFE7DE] border border-[#E2D5C8] text-[10px] uppercase tracking-wider text-[#4A3F3F] rounded-xs cursor-pointer">
-                                {uploadingImageKey === `product-${idx}` ? 'Optimizing...' : 'Upload Photo'}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                          {/* Left: Product Information Inputs */}
+                          <div className="lg:col-span-6 space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                              <div className="sm:col-span-8">
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                  Product Name
+                                </label>
                                 <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
+                                  type="text"
+                                  value={prod.name}
                                   onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      handleImageUpload(
-                                        file,
-                                        (url) => {
-                                          updateDraft((prev) => {
-                                            const next = { ...prev };
-                                            next.products[idx].image = url;
-                                            return next;
-                                          });
-                                        },
-                                        `product-${idx}`,
-                                        1000,
-                                        1000
-                                      );
-                                    }
+                                    const val = e.target.value;
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      next.products[idx].name = val;
+                                      return next;
+                                    });
                                   }}
+                                  placeholder="Product Name"
+                                  className="w-full px-2.5 py-1.5 text-xs font-serif font-medium bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
                                 />
-                              </label>
+                              </div>
+
+                              <div className="sm:col-span-4">
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                  Price
+                                </label>
+                                <input
+                                  type="text"
+                                  value={prod.price}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      next.products[idx].price = val;
+                                      return next;
+                                    });
+                                  }}
+                                  placeholder="$2,450"
+                                  className="w-full px-2.5 py-1.5 text-xs font-semibold bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs text-[#2A2323]"
+                                />
+                              </div>
                             </div>
 
-                            <input
-                              type="text"
+                            <div>
+                              <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                Craft & Material Tagline
+                              </label>
+                              <input
+                                type="text"
+                                value={prod.tagline}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  updateDraft((prev) => {
+                                    const next = { ...prev };
+                                    next.products[idx].tagline = val;
+                                    return next;
+                                  });
+                                }}
+                                placeholder="e.g. 18k Fairmined Gold · 1.2ct F-VS Diamonds"
+                                className="w-full px-2.5 py-1.5 text-xs bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs text-[#554949]"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                  Ref Code
+                                </label>
+                                <input
+                                  type="text"
+                                  value={prod.refCode}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      next.products[idx].refCode = val;
+                                      return next;
+                                    });
+                                  }}
+                                  className="w-full px-2.5 py-1.5 text-xs font-mono bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] uppercase tracking-wider text-[#665959] font-medium mb-1">
+                                  Promo Badge (Optional)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={prod.badge || ''}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      next.products[idx].badge = val;
+                                      return next;
+                                    });
+                                  }}
+                                  placeholder="e.g. -14%, NEW, ICONIC"
+                                  className="w-full px-2.5 py-1.5 text-xs uppercase tracking-wider bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Standardized Image Update & Upload Control */}
+                          <div className="lg:col-span-6">
+                            <ImageUpdateField
+                              id={`product-img-${idx}`}
+                              label={`${prod.name || `Product ${idx + 1}`} Still Photo`}
                               value={prod.image}
-                              onChange={(e) => {
-                                const val = e.target.value;
+                              onChange={(newUrl) => {
                                 updateDraft((prev) => {
                                   const next = { ...prev };
-                                  next.products[idx].image = val;
+                                  next.products[idx].image = newUrl;
                                   return next;
                                 });
                               }}
-                              placeholder="Image URL"
-                              className="w-full px-2 py-1 text-[10px] bg-[#FAF8F5] border border-[#E2D5C8] rounded-xs"
+                              onUpload={(file) => {
+                                handleImageUpload(
+                                  file,
+                                  (url) => {
+                                    updateDraft((prev) => {
+                                      const next = { ...prev };
+                                      next.products[idx].image = url;
+                                      return next;
+                                    });
+                                  },
+                                  `product-${idx}`,
+                                  1000,
+                                  1000
+                                );
+                              }}
+                              isUploading={uploadingImageKey === `product-${idx}`}
+                              aspectRatio="1/1"
+                              aspectLabel="1:1 Square Still"
+                              recommendedDimensions="1000 × 1000px"
+                              defaultUrl={DEFAULT_SITE_CONTENT.products[idx]?.image}
+                              isLiveSynced={content.products?.[idx]?.image === prod.image}
                             />
                           </div>
-
                         </div>
                       </div>
                     ))}
@@ -1684,12 +1653,24 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(draft, null, 2
                     onOpenContact={() => {}}
                     onNavigateSection={() => {}}
                   />
-                  <Hero />
-                  <FeaturedCollections onSelectCategory={() => {}} />
-                  <EverydayElegance onSelectPiece={() => {}} />
-                  <EditorialStoryTabs onExplore={() => {}} />
-                  <GiftPackagingSection onOpenGiftInquiry={() => {}} />
-                  <Footer onOpenContact={() => {}} onNavigateSection={() => {}} />
+                  <FadeInSection delay={60}>
+                    <Hero />
+                  </FadeInSection>
+                  <FadeInSection>
+                    <FeaturedCollections onSelectCategory={() => {}} />
+                  </FadeInSection>
+                  <FadeInSection>
+                    <EverydayElegance onSelectPiece={() => {}} />
+                  </FadeInSection>
+                  <FadeInSection>
+                    <EditorialStoryTabs onExplore={() => {}} />
+                  </FadeInSection>
+                  <FadeInSection>
+                    <GiftPackagingSection onOpenGiftInquiry={() => {}} />
+                  </FadeInSection>
+                  <FadeInSection>
+                    <Footer onOpenContact={() => {}} onNavigateSection={() => {}} />
+                  </FadeInSection>
                 </div>
               </div>
             </div>

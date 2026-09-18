@@ -4,16 +4,18 @@ import slide1Img from '../assets/images/jewelry_hero_clean_1_1789492829951.jpg';
 import slide2Img from '../assets/images/jewelry_hero_clean_2_1789492847429.jpg';
 import slide3Img from '../assets/images/jewelry_hero_clean_3_1789492876099.jpg';
 import { useSiteContent } from '../context/SiteContentContext';
+import { HeroSkeleton } from './skeletons/HeroSkeleton';
 
 interface HeroProps {
   onExploreClick?: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = () => {
-  const { content } = useSiteContent();
+  const { content, isLoading } = useSiteContent();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [loadedSlides, setLoadedSlides] = useState<Record<number, boolean>>({});
 
   // Default template asset paths to pair with bundled images
   const defaultAssetPaths = [
@@ -99,6 +101,10 @@ export const Hero: React.FC<HeroProps> = () => {
     mouseStartX.current = null;
   };
 
+  if (isLoading) {
+    return <HeroSkeleton />;
+  }
+
   return (
     <section
       id="home"
@@ -115,6 +121,8 @@ export const Hero: React.FC<HeroProps> = () => {
       <div className="absolute inset-0 w-full h-full">
         {slides.map((slide, index) => {
           const isActive = index === currentSlide;
+          const isSlideReady = !!loadedSlides[index];
+
           return (
             <div
               key={slide.id}
@@ -122,12 +130,23 @@ export const Hero: React.FC<HeroProps> = () => {
                 isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
               }`}
             >
+              {/* Underlying luxury shimmer skeleton while slide image is downloading/decoding */}
+              {!isSlideReady && (
+                <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
+                  <HeroSkeleton />
+                </div>
+              )}
+
               <img
                 key={slide.image}
                 src={slide.image}
                 alt={slide.alt}
-                className="w-full h-full object-cover sm:object-cover object-center select-none"
+                className={`w-full h-full object-cover object-center select-none transition-opacity duration-700 ease-out ${
+                  isSlideReady ? 'opacity-100' : 'opacity-0'
+                }`}
                 loading={index === 0 ? 'eager' : 'lazy'}
+                onLoad={() => setLoadedSlides((prev) => ({ ...prev, [index]: true }))}
+                onError={() => setLoadedSlides((prev) => ({ ...prev, [index]: true }))}
               />
             </div>
           );

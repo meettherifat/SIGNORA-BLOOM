@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
 import detailInsetImg from '../assets/images/jewelry_detail_inset_1789491793865.jpg';
 import { useSiteContent } from '../context/SiteContentContext';
+import { ImageWithSkeleton } from './ui/ImageWithSkeleton';
+import { EditorialStorySkeleton } from './skeletons/EditorialStorySkeleton';
 
 interface EditorialStoryTabsProps {
   onExplore: () => void;
 }
 
 export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = ({ onExplore }) => {
-  const { content } = useSiteContent();
+  const { content, isLoading } = useSiteContent();
+  const [activeTabId, setActiveTabId] = useState('beauty-ingenuity');
+
+  if (isLoading) {
+    return <EditorialStorySkeleton />;
+  }
+
   const rawTabs = content?.editorial?.tabs || [];
   const tabs = rawTabs.map((tab) => ({
     ...tab,
     insetDetailImage: tab.insetDetailImage || detailInsetImg,
   }));
 
-  const [activeTabId, setActiveTabId] = useState('beauty-ingenuity');
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || {
     id: 'beauty-ingenuity',
     tabLabel: 'BEAUTY & INGENUITY',
@@ -111,32 +118,40 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = ({ onExplor
           <div className="md:col-span-6 flex justify-center md:justify-end pb-6 sm:pb-10 md:pb-12">
             <div className="relative w-full max-w-[340px] sm:max-w-[390px] md:max-w-[420px] mx-auto md:ml-auto md:mr-0">
               
-              {/* BIG IMAGE: Exactly 3:4 aspect ratio */}
-              <div className="relative w-full aspect-[3/4] bg-[#EFE6DC] overflow-hidden rounded-xs shadow-xs">
-                <img
+              {/* BIG IMAGE: Exactly 3:4 aspect ratio with luxury shimmer skeleton */}
+              <div 
+                data-cursor="image"
+                data-cursor-text="ARCHIVE"
+                className="relative w-full aspect-[3/4] bg-[#EFE6DC] overflow-hidden rounded-xs shadow-xs cursor-pointer"
+              >
+                <ImageWithSkeleton
+                  id="editorial-main-img"
                   src={activeTab.mainImage}
                   alt={activeTab.headline}
+                  aspectRatio="3/4"
+                  skeletonLabel="EDITORIAL ARCHIVE"
                   className="w-full h-full object-cover object-center filter contrast-[1.03] brightness-[1.01] transition-all duration-500"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = activeTab.mainFallback;
-                  }}
+                  containerClassName="w-full h-full aspect-[3/4]"
+                  fallbackSrc={activeTab.mainFallback}
                 />
               </div>
 
               {/* SMALL INSET IMAGE: Exactly 1:1 aspect ratio (Square), displayed fully and cleanly on all devices */}
               <div 
-                className="absolute bottom-3 left-3 sm:-bottom-6 sm:-left-6 md:-bottom-8 md:-left-8 w-24 sm:w-32 md:w-36 lg:w-40 aspect-square bg-[#FFFFFF] p-1.5 sm:p-2 shadow-[0_10px_25px_rgba(51,43,43,0.16)] z-20 rounded-xs transition-all"
+                data-cursor="image"
+                data-cursor-text="DETAIL"
+                className="absolute bottom-3 left-3 sm:-bottom-6 sm:-left-6 md:-bottom-8 md:-left-8 w-24 sm:w-32 md:w-36 lg:w-40 aspect-square bg-[#FFFFFF] p-1.5 sm:p-2 shadow-[0_10px_25px_rgba(51,43,43,0.16)] z-20 rounded-xs transition-all cursor-pointer"
               >
                 <div className="w-full h-full aspect-square overflow-hidden bg-[#FAF5EE]">
-                  <img
+                  <ImageWithSkeleton
+                    id="editorial-inset-img"
                     src={activeTab.insetDetailImage}
                     alt="Jewelry Detail Study"
+                    aspectRatio="1/1"
+                    skeletonLabel="DETAIL"
                     className="w-full h-full aspect-square object-cover object-center transition-transform duration-500 hover:scale-105"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=85';
-                    }}
+                    containerClassName="w-full h-full aspect-square"
+                    fallbackSrc="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=85"
                   />
                 </div>
               </div>

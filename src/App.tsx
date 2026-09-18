@@ -6,11 +6,13 @@ import { EverydayElegance } from './components/EverydayElegance';
 import { EditorialStoryTabs } from './components/EditorialStoryTabs';
 import { GiftPackagingSection } from './components/GiftPackagingSection';
 import { Footer } from './components/Footer';
+import { FadeInSection } from './components/FadeInSection';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { ContactConciergeModal } from './components/ContactConciergeModal';
 import { Accessory } from './types';
 import { SiteContentProvider } from './context/SiteContentContext';
 import { AdminPage } from './pages/AdminPage';
+import { CustomCursor } from './components/ui/CustomCursor';
 
 export default function App() {
   const getRouteFromUrl = () => {
@@ -113,31 +115,43 @@ export default function App() {
           {/* MAIN HOMEPAGE SECTIONS */}
           <main className="flex-1">
             {/* 2. HERO: Interactive Slider with 16:9 scenes and controls */}
-            <Hero onExploreClick={handleExploreCollections} />
+            <FadeInSection delay={80}>
+              <Hero onExploreClick={handleExploreCollections} />
+            </FadeInSection>
 
             {/* 3. CATEGORY MOSAIC: 3-column mosaic with aligned 9:16 and 1:1 ratios */}
-            <FeaturedCollections
-              onSelectCategory={() => handleNavigateSection('everyday-elegance')}
-            />
+            <FadeInSection>
+              <FeaturedCollections
+                onSelectCategory={() => handleNavigateSection('everyday-elegance')}
+              />
+            </FadeInSection>
 
-            {/* 4. EVERYDAY ELEGANCE: 4-square product row with -14% and -20% badges */}
-            <EverydayElegance
-              onSelectPiece={(piece) => setSelectedPiece(piece)}
-            />
+            {/* 4. EVERYDAY ELEGANCE: 4-square product row */}
+            <FadeInSection>
+              <EverydayElegance
+                onSelectPiece={(piece) => setSelectedPiece(piece)}
+              />
+            </FadeInSection>
 
             {/* 5. TABBED EDITORIAL: Beauty & Ingenuity (3:4 main image & 1:1 detail) */}
-            <EditorialStoryTabs onExplore={handleExploreCollections} />
+            <FadeInSection>
+              <EditorialStoryTabs onExplore={handleExploreCollections} />
+            </FadeInSection>
 
             {/* 6. SURPRISE A LOVED ONE: Luxury Striped Gift Box Section */}
-            <GiftPackagingSection onOpenGiftInquiry={() => handleOpenContact()} />
+            <FadeInSection>
+              <GiftPackagingSection onOpenGiftInquiry={() => handleOpenContact()} />
+            </FadeInSection>
           </main>
 
           {/* 7. CLEAN FOOTER */}
-          <Footer
-            onOpenContact={() => handleOpenContact()}
-            onNavigateSection={handleNavigateSection}
-            onNavigateAdmin={() => navigateTo('/rifat')}
-          />
+          <FadeInSection>
+            <Footer
+              onOpenContact={() => handleOpenContact()}
+              onNavigateSection={handleNavigateSection}
+              onNavigateAdmin={() => navigateTo('/rifat')}
+            />
+          </FadeInSection>
 
           {/* Editorial Piece Detail Modal */}
           <ProductDetailModal
@@ -158,6 +172,9 @@ export default function App() {
             }}
             preselectedAccessory={inquiryAccessory}
           />
+
+          {/* Luxury Atelier Custom Kinetic Cursor */}
+          <CustomCursor />
         </div>
       )}
     </SiteContentProvider>

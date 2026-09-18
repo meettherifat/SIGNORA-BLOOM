@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, ArrowRight } from 'lucide-react';
 import { Accessory } from '../types';
+import { ImageWithSkeleton } from './ui/ImageWithSkeleton';
 
 interface ProductDetailModalProps {
   accessory: Accessory | null;
@@ -34,14 +35,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Left: Large Pure Image */}
+        {/* Left: Large Pure Image with skeleton loader */}
         <div className="md:w-1/2 bg-[#FAF6F1] p-6 sm:p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-[#E8DFD5]">
           <div className="relative w-full aspect-square overflow-hidden bg-[#FAF6F1] border border-[#E8DFD5]">
-            <img
+            <ImageWithSkeleton
+              id="modal-product-img"
               src={accessory.image}
               alt={accessory.name}
+              aspectRatio="1/1"
+              skeletonLabel="JEWELRY ARCHIVE"
               className="w-full h-full object-cover object-center"
-              referrerPolicy="no-referrer"
+              containerClassName="w-full h-full aspect-square"
+              fallbackSrc="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=85"
             />
           </div>
         </div>
