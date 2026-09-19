@@ -96,9 +96,9 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = () => {
           
           {/* LEFT COLUMN: Headline, Paragraph & Rectangular Button */}
           <div className="md:col-span-6 flex flex-col justify-center text-left md:pr-6">
-            <h3 className="font-serif text-3xl sm:text-4xl md:text-[40px] font-normal text-[#2A2323] tracking-wide mb-4">
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-[40px] font-normal text-[#2A2323] tracking-wide mb-4">
               {activeTab.headline}
-            </h3>
+            </h2>
 
             <p className="font-sans text-xs sm:text-[13px] text-[#665959] leading-relaxed max-w-lg font-light">
               {activeTab.description}
@@ -114,7 +114,7 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = () => {
                 <ImageWithSkeleton
                   id="editorial-main-img"
                   src={activeTab.mainImage}
-                  alt={activeTab.headline}
+                  alt={`Signora Bloom editorial — ${activeTab.headline}`}
                   aspectRatio="3/4"
                   skeletonLabel="EDITORIAL ARCHIVE"
                   className="w-full h-full object-cover object-center filter contrast-[1.03] brightness-[1.01] transition-all duration-500"
@@ -131,7 +131,7 @@ export const EditorialStoryTabs: React.FC<EditorialStoryTabsProps> = () => {
                   <ImageWithSkeleton
                     id="editorial-inset-img"
                     src={activeTab.insetDetailImage}
-                    alt="Jewelry Detail Study"
+                    alt={`Close-up craftsmanship detail of ${activeTab.tabLabel} by Signora Bloom`}
                     aspectRatio="1/1"
                     skeletonLabel="DETAIL"
                     className="w-full h-full aspect-square object-cover object-center transition-transform duration-500 hover:scale-105"

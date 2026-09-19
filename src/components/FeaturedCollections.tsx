@@ -48,6 +48,9 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
       aria-label="Category Collections Mosaic"
       className="w-full bg-[#FFFFFF] py-10 sm:py-14 md:py-18"
     >
+      {/* Visually hidden H2 for document outline and search engine indexers */}
+      <h2 className="sr-only">Curated Women's Jewelry & Fashion Accessories Collections</h2>
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Exact 3-Column Mosaic Grid: All columns aligned flush at top and bottom */}
@@ -56,22 +59,23 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           {/* ========================================================== */}
           {/* 1. LEFT COLUMN: Image 1 -> 9:16 RATIO (4:5 on mobile)       */}
           {/* ========================================================== */}
-          <div 
+          <figure 
             id="mosaic-rings"
-            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
+            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default m-0"
           >
+            <figcaption className="sr-only">Women's Rings - Curated gold and delicate statement designs</figcaption>
             {/* Aspect Ratio 9:16 on desktop, 4:5 on mobile for balanced presentation */}
             <ImageWithSkeleton
               id="mosaic-img-rings"
               src={colRings.image}
-              alt={colRings.title || 'Fine Rings'}
+              alt="Signora Bloom gold floral and textured rings from curated collection"
               aspectRatio="9/16"
               skeletonLabel="FINE RINGS"
               className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
               containerClassName="w-full h-full aspect-[4/5] sm:aspect-[3/4] md:aspect-[9/16]"
               fallbackSrc="https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=800&q=85"
             />
-          </div>
+          </figure>
 
           {/* ========================================================== */}
           {/* 2. MIDDLE COLUMN: Image 2 (1:1 RATIO) + Images 3 & 4       */}
@@ -80,56 +84,59 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           <div className="md:col-span-4 flex flex-col justify-between gap-3.5 sm:gap-4 md:gap-5 h-full">
             
             {/* TOP: Image 2 -> 1:1 RATIO (SQUARE) */}
-            <div 
+            <figure 
               id="mosaic-bracelets"
-              className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs w-full aspect-square shrink-0 cursor-default"
+              className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs w-full aspect-square shrink-0 cursor-default m-0"
             >
+              <figcaption className="sr-only">Women's Bangles and Bracelets - Sculptural stacking jewelry</figcaption>
               <ImageWithSkeleton
                 id="mosaic-img-bracelets"
                 src={colBracelets.image}
-                alt={colBracelets.title || 'Sculptural Bracelets'}
+                alt="Signora Bloom textured gold bangles and layered women's bracelets"
                 aspectRatio="1/1"
                 skeletonLabel="SCULPTURAL BRACELETS"
                 className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
                 containerClassName="w-full h-full aspect-square"
                 fallbackSrc="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=85"
               />
-            </div>
+            </figure>
 
             {/* BOTTOM: Images 3 & 4 side by side -> Fills remaining height to align bottom perfectly */}
             <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 flex-1 min-h-0">
               
               {/* Image 3 */}
-              <div
+              <figure
                 id="mosaic-necklaces"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default aspect-square sm:aspect-auto"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default aspect-square sm:aspect-auto m-0"
               >
+                <figcaption className="sr-only">Jewelry & Medallion Necklaces - Curated everyday chains and pendants</figcaption>
                 <ImageWithSkeleton
                   id="mosaic-img-necklaces"
                   src={colNecklaces.image}
-                  alt={colNecklaces.title || 'Medallion Necklaces'}
+                  alt="Signora Bloom layered gold coin medallion necklaces and jewelry accents"
                   skeletonLabel="NECKLACES"
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
                   containerClassName="w-full h-full min-h-[140px] sm:min-h-[180px]"
                   fallbackSrc="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=85"
                 />
-              </div>
+              </figure>
 
               {/* Image 4 */}
-              <div
+              <figure
                 id="mosaic-earrings"
-                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default aspect-square sm:aspect-auto"
+                className="relative overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full flex flex-col cursor-default aspect-square sm:aspect-auto m-0"
               >
+                <figcaption className="sr-only">Women's Earrings - Fluted hoops, studs, and drop accents</figcaption>
                 <ImageWithSkeleton
                   id="mosaic-img-earrings"
                   src={colEarrings.image}
-                  alt={colEarrings.title || 'Drop and Hoop Earrings'}
+                  alt="Signora Bloom fluted gold hoop earrings and drop studs"
                   skeletonLabel="EARRINGS"
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
                   containerClassName="w-full h-full min-h-[140px] sm:min-h-[180px]"
                   fallbackSrc="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=800&q=85"
                 />
-              </div>
+              </figure>
 
             </div>
 
@@ -138,22 +145,23 @@ export const FeaturedCollections: React.FC<FeaturedCollectionsProps> = () => {
           {/* ========================================================== */}
           {/* 3. RIGHT COLUMN: Image 5 -> 9:16 RATIO (4:5 on mobile)      */}
           {/* ========================================================== */}
-          <div 
+          <figure 
             id="mosaic-charms"
-            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default"
+            className="md:col-span-4 relative flex flex-col overflow-hidden bg-[#F7F4F0] rounded-xs shadow-xs h-full cursor-default m-0"
           >
+            <figcaption className="sr-only">Women's Fashion Accessories - Refined everyday styling</figcaption>
             {/* Aspect Ratio 9:16 on desktop, 4:5 on mobile for balanced presentation */}
             <ImageWithSkeleton
               id="mosaic-img-charms"
               src={colCharms.image}
-              alt={colCharms.title || 'Shop Charms'}
+              alt="Signora Bloom curated women's fashion accessories and elegant styling"
               aspectRatio="9/16"
               skeletonLabel="SHOP CHARMS"
               className="w-full h-full object-cover object-top transition-transform duration-700 ease-out hover:scale-102"
               containerClassName="w-full h-full aspect-[4/5] sm:aspect-[3/4] md:aspect-[9/16]"
               fallbackSrc="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=85"
             />
-          </div>
+          </figure>
 
         </div>
 

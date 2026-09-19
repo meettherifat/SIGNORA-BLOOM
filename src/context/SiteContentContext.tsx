@@ -2,6 +2,23 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { SiteContent, DEFAULT_SITE_CONTENT } from '../siteContent';
 import { safeParseResponseJson } from '../utils/security';
 import { loadContentFromIndexedDb, saveContentToIndexedDb } from '../utils/storageDb';
+import {
+  mergeHeroSlides,
+  mergeCollections,
+  mergeEditorialTabs,
+  mergeProducts,
+  mergeSiteContent,
+  mergeWithDefaults,
+} from '../utils/mergeContent';
+
+export {
+  mergeHeroSlides,
+  mergeCollections,
+  mergeEditorialTabs,
+  mergeProducts,
+  mergeSiteContent,
+  mergeWithDefaults,
+};
 
 export interface VerifiedHeroSlide {
   id: number;
@@ -37,181 +54,6 @@ const STORAGE_KEYS = ['sb_atelier_site_content_v2', 'sb_site_content_override'];
 const PRIMARY_STORAGE_KEY = 'sb_atelier_site_content_v2';
 
 const SiteContentContext = createContext<SiteContentContextType | undefined>(undefined);
-
-/**
- * Deep merges Hero Slides by ID to guarantee that updating one or two slides
- * never drops or overwrites the other slides in the hero section.
- */
-export function mergeHeroSlides(
-  baseSlides: { id: number; image: string; alt: string; headline: string; buttonText: string }[],
-  incomingSlides?: any[]
-): { id: number; image: string; alt: string; headline: string; buttonText: string }[] {
-  if (!Array.isArray(incomingSlides) || incomingSlides.length === 0) {
-    return baseSlides.map((s) => ({ ...s }));
-  }
-
-  // Create lookup map initialized with base/existing slides
-  const slideMap = new Map<number, { id: number; image: string; alt: string; headline: string; buttonText: string }>();
-  baseSlides.forEach((slide, idx) => {
-    slideMap.set(typeof slide.id === 'number' ? slide.id : idx, { ...slide });
-  });
-
-  // Apply incoming slide updates without overwriting existing sibling fields
-  incomingSlides.forEach((inc, idx) => {
-    if (!inc || typeof inc !== 'object') return;
-    const slideId = typeof inc.id === 'number' ? inc.id : idx;
-    const existing = slideMap.get(slideId) || baseSlides[idx] || {
-      id: slideId,
-      image: '',
-      alt: '',
-      headline: '',
-      buttonText: 'SHOP NOW',
-    };
-
-    slideMap.set(slideId, {
-      ...existing,
-      id: slideId,
-      // If incoming image is a non-empty string, update it; otherwise preserve existing image
-      image: typeof inc.image === 'string' && inc.image.trim() !== '' ? inc.image : existing.image,
-      alt: typeof inc.alt === 'string' ? inc.alt : existing.alt,
-      headline: typeof inc.headline === 'string' ? inc.headline : existing.headline,
-      buttonText: typeof inc.buttonText === 'string' ? inc.buttonText : existing.buttonText,
-    });
-  });
-
-  // Preserve base slide order and ensure all original slides exist
-  const result: { id: number; image: string; alt: string; headline: string; buttonText: string }[] = [];
-  const processedIds = new Set<number>();
-
-  baseSlides.forEach((base, idx) => {
-    const id = typeof base.id === 'number' ? base.id : idx;
-    const merged = slideMap.get(id);
-    if (merged) {
-      result.push(merged);
-      processedIds.add(id);
-    }
-  });
-
-  // Append any extra incoming slides that have new IDs
-  slideMap.forEach((slide, id) => {
-    if (!processedIds.has(id)) {
-      result.push(slide);
-    }
-  });
-
-  return result.length > 0 ? result : baseSlides.map((s) => ({ ...s }));
-}
-
-/**
- * Deep merges collection cards preserving existing card items
- */
-export function mergeCollections(baseCollections: any[], incoming?: any[]) {
-  if (!Array.isArray(incoming) || incoming.length === 0) {
-    return baseCollections.map((c) => ({ ...c }));
-  }
-  const colMap = new Map<string, any>();
-  baseCollections.forEach((c) => colMap.set(c.id, { ...c }));
-  incoming.forEach((inc) => {
-    if (!inc || !inc.id) return;
-    const existing = colMap.get(inc.id) || {};
-    colMap.set(inc.id, { ...existing, ...inc });
-  });
-  return Array.from(colMap.values());
-}
-
-/**
- * Deep merges editorial tabs preserving tabs and existing images
- */
-export function mergeEditorialTabs(baseTabs: any[], incoming?: any[]) {
-  if (!Array.isArray(incoming) || incoming.length === 0) {
-    return baseTabs.map((t) => ({ ...t }));
-  }
-  const tabMap = new Map<string, any>();
-  baseTabs.forEach((t) => tabMap.set(t.id, { ...t }));
-  incoming.forEach((inc) => {
-    if (!inc || !inc.id) return;
-    const existing = tabMap.get(inc.id) || {};
-    tabMap.set(inc.id, { ...existing, ...inc });
-  });
-  return Array.from(tabMap.values());
-}
-
-/**
- * Deep merges products catalog preserving existing products
- */
-export function mergeProducts(baseProducts: any[], incoming?: any[]) {
-  if (!Array.isArray(incoming) || incoming.length === 0) {
-    return baseProducts.map((p) => ({ ...p }));
-  }
-  const prodMap = new Map<string, any>();
-  baseProducts.forEach((p) => prodMap.set(p.id, { ...p }));
-  incoming.forEach((inc) => {
-    if (!inc || !inc.id) return;
-    const existing = prodMap.get(inc.id) || {};
-    prodMap.set(inc.id, { ...existing, ...inc });
-  });
-  return Array.from(prodMap.values());
-}
-
-/**
- * Robust deep merge of SiteContent that ensures partial updates
- * (e.g. updating one hero slide image) NEVER overwrite other sections or slides.
- */
-export function mergeSiteContent(base: SiteContent, custom: any): SiteContent {
-  if (!custom || typeof custom !== 'object') {
-    return base;
-  }
-
-  const baseHero = base.hero || DEFAULT_SITE_CONTENT.hero;
-  const baseCollections = base.collections || DEFAULT_SITE_CONTENT.collections;
-  const baseEditorial = base.editorial || DEFAULT_SITE_CONTENT.editorial;
-  const baseGift = base.giftSection || DEFAULT_SITE_CONTENT.giftSection;
-  const baseProducts = base.products || DEFAULT_SITE_CONTENT.products;
-  const baseFooter = base.footer || DEFAULT_SITE_CONTENT.footer;
-  const baseBrand = base.brand || DEFAULT_SITE_CONTENT.brand;
-
-  return {
-    ...base,
-    ...custom,
-    brand: {
-      ...baseBrand,
-      ...(custom.brand || {}),
-    },
-    hero: {
-      ...baseHero,
-      ...(custom.hero || {}),
-      slides: mergeHeroSlides(baseHero.slides, custom?.hero?.slides),
-    },
-    collections: mergeCollections(baseCollections, custom?.collections),
-    editorial: {
-      ...baseEditorial,
-      ...(custom.editorial || {}),
-      tabs: mergeEditorialTabs(baseEditorial.tabs, custom?.editorial?.tabs),
-    },
-    giftSection: {
-      ...baseGift,
-      ...(custom.giftSection || {}),
-      perks: Array.isArray(custom?.giftSection?.perks) && custom.giftSection.perks.length > 0
-        ? custom.giftSection.perks
-        : baseGift.perks,
-      features: Array.isArray(custom?.giftSection?.features) && custom.giftSection.features.length > 0
-        ? custom.giftSection.features
-        : baseGift.features,
-    },
-    everydayElegance: {
-      title: custom?.everydayElegance?.title || base.everydayElegance?.title || DEFAULT_SITE_CONTENT.everydayElegance?.title || 'Everyday Elegance',
-    },
-    products: mergeProducts(baseProducts, custom?.products),
-    footer: {
-      ...baseFooter,
-      ...(custom.footer || {}),
-    },
-  };
-}
-
-export function mergeWithDefaults(custom: any): SiteContent {
-  return mergeSiteContent(DEFAULT_SITE_CONTENT, custom);
-}
 
 /**
  * Validates image loadability in real-time in the browser
@@ -321,25 +163,20 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     async function fetchContent() {
       try {
         const res = await fetch('/api/content', {
-          headers: { 'Cache-Control': 'no-cache' },
+          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
         });
         
         const data = await safeParseResponseJson(res);
         if (data && data.success && data.content && isMounted) {
-          // Only update from server if server actually has custom data
-          if (data.source === 'custom' && data.content && Object.keys(data.content).length > 0) {
-            setContent((prev) => {
-              const merged = mergeWithDefaults({ ...prev, ...data.content });
-              try {
-                for (const key of STORAGE_KEYS) {
-                  localStorage.setItem(key, JSON.stringify(merged));
-                }
-              } catch {
-                // Ignore quota errors
-              }
-              saveContentToIndexedDb(merged);
-              return merged;
-            });
+          const serverContent = mergeWithDefaults(data.content);
+          setContent(serverContent);
+          saveContentToIndexedDb(serverContent);
+          try {
+            for (const key of STORAGE_KEYS) {
+              localStorage.setItem(key, JSON.stringify(serverContent));
+            }
+          } catch {
+            // Ignore quota errors
           }
         }
       } catch (err) {
@@ -419,7 +256,7 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // 3. Real-time DOM & image loadability verification
     const heroVerification = await verifyHeroImages(mergedContent.hero.slides);
 
-    // 4. Attempt to synchronize with server
+    // 4. Synchronize with live server
     try {
       const res = await fetch('/api/content', {
         method: 'POST',
@@ -436,7 +273,7 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (res.status === 401) {
         return {
           success: false,
-          message: 'Unauthorized: Session expired or invalid. Please sign in.',
+          message: 'Unauthorized: Session expired or invalid. Please sign in again.',
           error: 'Session expired',
           verifiedHeroSlides: heroVerification.slides,
           verifiedAt: new Date().toLocaleTimeString(),
@@ -445,18 +282,26 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       if (res.ok && data?.success) {
-        if (data.content && typeof data.content === 'object') {
-          const finalConfirmed = mergeSiteContent(mergedContent, data.content);
-          setContent(finalConfirmed);
-          saveContentToIndexedDb(finalConfirmed);
+        const finalConfirmed = data.content && typeof data.content === 'object'
+          ? mergeSiteContent(mergedContent, data.content)
+          : mergedContent;
+
+        setContent(finalConfirmed);
+        saveContentToIndexedDb(finalConfirmed);
+        try {
+          for (const key of STORAGE_KEYS) {
+            localStorage.setItem(key, JSON.stringify(finalConfirmed));
+          }
+        } catch {
+          // Ignore quota errors
         }
 
         return {
           success: true,
-          message: `Site published and verified! ${mergedContent.hero.slides.length} hero slides active without overwriting.`,
+          message: data.message || 'Saved to Server: Changes are live and visible to all visitors on all devices & browsers.',
           verifiedHeroSlides: heroVerification.slides,
           verifiedAt: new Date().toLocaleTimeString(),
-          content: mergedContent,
+          content: finalConfirmed,
         };
       }
 
@@ -471,19 +316,19 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
         };
       }
 
-      // If server returned non-JSON / empty (e.g. static hosting on Vercel)
       return {
-        success: true,
-        message: 'All changes saved & verified live locally.',
+        success: false,
+        message: `Server returned HTTP ${res.status}. Failed to persist changes to the server.`,
+        error: `HTTP ${res.status}`,
         verifiedHeroSlides: heroVerification.slides,
         verifiedAt: new Date().toLocaleTimeString(),
         content: mergedContent,
       };
-    } catch {
-      // Offline or network error: Local changes remain verified and active in browser
+    } catch (networkErr: any) {
       return {
-        success: true,
-        message: 'Changes saved & verified in local high-capacity storage.',
+        success: false,
+        message: 'Could not connect to the server. Changes could not be published to the server.',
+        error: networkErr?.message || 'Network error',
         verifiedHeroSlides: heroVerification.slides,
         verifiedAt: new Date().toLocaleTimeString(),
         content: mergedContent,

@@ -1,77 +1,4 @@
-export interface CollectionItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  category: string;
-  image: string;
-  itemCount: string;
-  span?: string;
-}
-
-export interface SiteContent {
-  brand: {
-    name: string;
-    tagline: string;
-    phone: string;
-    email: string;
-    conciergeHours: string;
-    address: string;
-    facebookUrl?: string;
-    instagramUrl?: string;
-  };
-  hero: {
-    slides: {
-      id: number;
-      image: string;
-      alt: string;
-      headline: string;
-      buttonText: string;
-    }[];
-  };
-  collections: CollectionItem[];
-  editorial: {
-    tabs: {
-      id: string;
-      tabLabel: string;
-      headline: string;
-      description: string;
-      mainImage: string;
-      insetDetailImage: string;
-      buttonLabel: string;
-    }[];
-  };
-  giftSection: {
-    badge: string;
-    headline: string;
-    subheadline: string;
-    boxLabel: string;
-    boxTheme: 'crimson' | 'noir' | 'champagne' | 'emerald';
-    perks: { title: string; desc: string }[];
-    features: { number: string; title: string; description: string }[];
-  };
-  everydayElegance?: {
-    title: string;
-  };
-  products: {
-    id: string;
-    refCode: string;
-    name: string;
-    category: string;
-    categoryLabel: string;
-    price: string;
-    tagline: string;
-    description: string;
-    image: string;
-    badge?: string;
-  }[];
-  footer: {
-    newsletterTitle: string;
-    newsletterDesc: string;
-    copyright: string;
-  };
-}
-
-export const DEFAULT_SITE_CONTENT: SiteContent = {
+{
   "brand": {
     "name": "SIGNORA BLOOM",
     "tagline": "A Curated Collection of Everyday Elegance.",
@@ -331,4 +258,4 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     "newsletterDesc": "Discover new arrivals, curated collections and everyday styling inspiration.",
     "copyright": "© 2026 Signora Bloom. All rights reserved."
   }
-};
+}

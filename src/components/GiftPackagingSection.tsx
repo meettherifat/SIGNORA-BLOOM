@@ -39,6 +39,7 @@ export const GiftPackagingSection: React.FC<GiftPackagingSectionProps> = ({ onOp
           {/* Geometric Crown Line-Art Icon */}
           <div className="mb-3.5 sm:mb-4 text-white/90">
             <svg
+              aria-hidden="true"
               width="38"
               height="30"
               viewBox="0 0 36 28"

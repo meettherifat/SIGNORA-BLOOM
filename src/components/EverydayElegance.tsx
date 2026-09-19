@@ -33,22 +33,23 @@ export const EverydayElegance: React.FC<EverydayEleganceProps> = () => {
         {/* 4 Square Items Row: Completely clean images without any badges, discount text, boxes, or links */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
           {products.map((item, idx) => (
-            <div
+            <article
               key={item.id}
               className="relative aspect-square bg-[#F7F4F0] overflow-hidden select-none cursor-default"
             >
+              <h3 className="sr-only">{item.name} — {item.categoryLabel}</h3>
               {/* Product Image with high-end skeleton placeholder */}
               <ImageWithSkeleton
                 id={`product-elegance-img-${idx}`}
                 src={item.image}
-                alt={item.name}
+                alt={`${item.name} — ${item.tagline || item.categoryLabel} from Signora Bloom`}
                 aspectRatio="1/1"
                 skeletonLabel={`PIECE 0${idx + 1}`}
                 className="w-full h-full object-cover object-center transition-transform duration-700 ease-out hover:scale-102"
                 containerClassName="w-full h-full aspect-square"
                 fallbackSrc="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=700&q=85"
               />
-            </div>
+            </article>
           ))}
         </div>
 

@@ -12,6 +12,8 @@ import { ContactConciergeModal } from './components/ContactConciergeModal';
 import { Accessory } from './types';
 import { SiteContentProvider } from './context/SiteContentContext';
 import { AdminPage } from './pages/AdminPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { SeoHead } from './components/SeoHead';
 
 export default function App() {
   const getRouteFromUrl = () => {
@@ -44,7 +46,18 @@ export default function App() {
   // Handle popstate and hashchange for browser back/forward buttons & direct links
   useEffect(() => {
     const handleLocationChange = () => {
-      setCurrentPath(getRouteFromUrl());
+      const newPath = getRouteFromUrl();
+      setCurrentPath(newPath);
+
+      // Handle section routes from path or hash
+      const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+      if (hash && ['collections', 'everyday-elegance', 'about', 'surprise-loved-one', 'home'].includes(hash)) {
+        setActiveNavSection(hash);
+        const elem = document.getElementById(hash);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -69,7 +82,7 @@ export default function App() {
   };
 
   const handleNavigateSection = (sectionId: string) => {
-    if (currentPath !== '/') {
+    if (currentPath !== '/' && currentPath !== '') {
       navigateTo('/');
       // Allow DOM to settle before scrolling
       setTimeout(() => {
@@ -98,10 +111,35 @@ export default function App() {
     currentPath === '/admin' ||
     currentPath.startsWith('/admin/');
 
+  // Determine if current path is a valid recognized route
+  const knownPublicPaths = [
+    '/',
+    '',
+    '/collections',
+    '/everyday-elegance',
+    '/about',
+    '/surprise-loved-one',
+    '/contact',
+  ];
+  const isNotFound = !isAdminRoute && !knownPublicPaths.includes(currentPath);
+
   return (
     <SiteContentProvider>
+      {/* Dynamic SEO Meta Tags, Canonical Link & Schema.org JSON-LD */}
+      <SeoHead
+        currentPath={currentPath}
+        activeNavSection={activeNavSection}
+        selectedPiece={selectedPiece}
+        isNotFound={isNotFound}
+      />
+
       {isAdminRoute ? (
         <AdminPage onNavigateHome={() => navigateTo('/')} />
+      ) : isNotFound ? (
+        <NotFoundPage
+          onNavigateHome={() => navigateTo('/')}
+          onNavigateSection={handleNavigateSection}
+        />
       ) : (
         <div className="min-h-screen flex flex-col bg-[#FFFFFF] text-[#2A2323] selection:bg-[#D8A7A7]/30 selection:text-[#332B2B]">
           {/* 1. HEADER (Glassy navbar effect) */}
@@ -112,7 +150,7 @@ export default function App() {
           />
 
           {/* MAIN HOMEPAGE SECTIONS */}
-          <main className="flex-1">
+          <main role="main" className="flex-1">
             {/* 2. HERO: Interactive Slider with 16:9 scenes and controls */}
             <FadeInSection delay={80}>
               <Hero onExploreClick={handleExploreCollections} />

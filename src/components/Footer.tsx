@@ -18,13 +18,17 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
   const normalizedInstagramUrl = instagramUrl.startsWith('http') ? instagramUrl : `https://${instagramUrl}`;
 
   return (
-    <footer id="footer-section" className="bg-[#FFFFFF] text-[#332B2B] border-t border-[#F0EBE5] py-12 sm:py-16">
+    <footer 
+      id="footer-section" 
+      role="contentinfo"
+      className="bg-[#FFFFFF] text-[#332B2B] border-t border-[#F0EBE5] py-12 sm:py-16"
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         
         {/* Brand Name */}
-        <h3 className="font-serif text-2xl sm:text-3xl tracking-[0.24em] font-light text-[#332B2B] mb-2">
-          SIGNORA BLOOM
-        </h3>
+        <div className="font-serif text-2xl sm:text-3xl tracking-[0.24em] font-light text-[#332B2B] mb-2">
+          {content?.brand?.name || 'SIGNORA BLOOM'}
+        </div>
 
         {/* Tagline */}
         <p className="font-serif text-xs sm:text-sm italic text-[#8E8080] mb-6 sm:mb-7">
@@ -36,6 +40,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
           <button 
             type="button"
             onClick={() => onNavigateSection('home')} 
+            aria-label="Navigate to Home section"
             className="hover:text-[#332B2B] transition-colors cursor-pointer py-1.5 px-1 min-h-[38px] flex items-center"
           >
             HOME
@@ -43,6 +48,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
           <button 
             type="button"
             onClick={() => onNavigateSection('collections')} 
+            aria-label="Explore curated women's accessories collections"
             className="hover:text-[#332B2B] transition-colors cursor-pointer py-1.5 px-1 min-h-[38px] flex items-center"
           >
             COLLECTIONS
@@ -50,6 +56,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
           <button 
             type="button"
             onClick={() => onNavigateSection('everyday-elegance')} 
+            aria-label="Discover Everyday Elegance showcase"
             className="hover:text-[#332B2B] transition-colors cursor-pointer py-1.5 px-1 min-h-[38px] flex items-center"
           >
             ELEGANCE
@@ -57,6 +64,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
           <button 
             type="button"
             onClick={() => onNavigateSection('about')} 
+            aria-label="About Signora Bloom brand and craftsmanship"
             className="hover:text-[#332B2B] transition-colors cursor-pointer py-1.5 px-1 min-h-[38px] flex items-center"
           >
             ABOUT
@@ -64,6 +72,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
           <button 
             type="button"
             onClick={onOpenContact} 
+            aria-label="Contact Signora Bloom Concierge"
             className="hover:text-[#332B2B] transition-colors cursor-pointer py-1.5 px-1 min-h-[38px] flex items-center font-medium"
           >
             CONTACT
@@ -77,6 +86,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
             href={normalizedInstagramUrl}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Visit Signora Bloom on Instagram"
             className="hover:text-[#332B2B] transition-colors py-1.5 px-2 min-h-[38px] flex items-center"
           >
             Instagram
@@ -87,6 +97,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact, onNavigateSection
             href={normalizedFacebookUrl}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Visit Signora Bloom on Facebook"
             className="hover:text-[#332B2B] transition-colors py-1.5 px-2 min-h-[38px] flex items-center"
           >
             Facebook

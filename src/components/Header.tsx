@@ -15,29 +15,33 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header 
       id="main-site-header"
+      role="banner"
       className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-md backdrop-saturate-150 border-b border-[#F0EBE5]/80 shadow-[0_4px_24px_rgba(51,43,43,0.04)] transition-all"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col items-center">
         
-        {/* Centered Brand Wordmark */}
+        {/* Centered Brand Wordmark (H1 for search engines, styled consistently) */}
         <div className="mb-2 sm:mb-3">
-          <a
-            href="#home"
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigateSection('home');
-            }}
-            className="text-center inline-block group focus:outline-none"
-            aria-label="SIGNORA BLOOM Home"
-          >
-            <span className="font-serif text-2xl sm:text-3xl md:text-[32px] tracking-[0.22em] text-[#2A2323] font-light group-hover:text-[#B89B82] transition-colors inline-block">
-              SIGNORA BLOOM
-            </span>
-          </a>
+          <h1 className="m-0 p-0 leading-none">
+            <a
+              href="#home"
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigateSection('home');
+              }}
+              className="text-center inline-block group focus:outline-none"
+              aria-label="Signora Bloom — Women's Jewelry & Fashion Accessories"
+            >
+              <span className="font-serif text-2xl sm:text-3xl md:text-[32px] tracking-[0.22em] text-[#2A2323] font-light group-hover:text-[#B89B82] transition-colors inline-block">
+                SIGNORA BLOOM
+              </span>
+            </a>
+          </h1>
         </div>
 
         {/* Centered Sub-Navigation Links with Responsive Touch Targets */}
         <nav 
+          role="navigation"
           aria-label="Main Navigation" 
           className="flex flex-wrap items-center justify-center gap-x-5 sm:gap-x-8 md:gap-x-9 gap-y-1.5 text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.24em] uppercase text-[#736767]"
         >
