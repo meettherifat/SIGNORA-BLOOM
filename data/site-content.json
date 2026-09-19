@@ -16,21 +16,21 @@
         "image": "/assets/images/jewelry_hero_clean_1_1789492829951.jpg",
         "alt": "Signora Bloom — A Curated Collection of Everyday Elegance",
         "headline": "SIGNORA BLOOM",
-        "buttonText": "SHOP COLLECTION"
+        "buttonText": "SHOP NOW"
       },
       {
         "id": 1,
         "image": "/assets/images/jewelry_hero_clean_2_1789492847429.jpg",
         "alt": "Thoughtfully curated women's accessories for everyday style",
         "headline": "EVERYDAY ELEGANCE, BEAUTIFULLY CURATED",
-        "buttonText": "SHOP COLLECTION"
+        "buttonText": "EXPLORE JEWELRY"
       },
       {
         "id": 2,
         "image": "/assets/images/jewelry_hero_clean_3_1789492876099.jpg",
         "alt": "Versatile fashion accessories designed to elevate any look",
         "headline": "STYLE IT YOUR WAY",
-        "buttonText": "EXPLORE NEW ARRIVALS"
+        "buttonText": "VIEW COLLECTION"
       }
     ]
   },

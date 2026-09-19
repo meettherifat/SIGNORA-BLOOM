@@ -323,47 +323,26 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         return {
           success: true,
-          message: data.message || 'Saved to Server: Changes are live and visible to all visitors on all devices & browsers.',
+          message: data.message || 'Saved to Server: Changes are permanently stored on the backend and live for all visitors across all devices.',
           verifiedHeroSlides: heroVerification.slides,
           verifiedAt: new Date().toLocaleTimeString(),
           content: finalConfirmed,
         };
       }
 
-      // If server returned 405, 404, or redirected from an auth bridge / static proxy:
-      // Content is ALREADY securely committed to IndexedDB, LocalStorage, and React memory.
-      if (res.status === 405 || res.status === 404 || res.redirected) {
-        return {
-          success: true,
-          message: 'Changes saved & verified live! (High-capacity local persistence active)',
-          verifiedHeroSlides: heroVerification.slides,
-          verifiedAt: new Date().toLocaleTimeString(),
-          content: mergedContent,
-        };
-      }
-
-      if (data?.error) {
-        return {
-          success: false,
-          message: data.error,
-          error: data.error,
-          verifiedHeroSlides: heroVerification.slides,
-          verifiedAt: new Date().toLocaleTimeString(),
-          content: mergedContent,
-        };
-      }
-
       return {
-        success: true,
-        message: 'Changes saved & published live in high-capacity storage.',
+        success: false,
+        message: data?.error || `Server returned HTTP ${res.status}. Changes could not be permanently saved to the server backend.`,
+        error: data?.error || `HTTP ${res.status}`,
         verifiedHeroSlides: heroVerification.slides,
         verifiedAt: new Date().toLocaleTimeString(),
         content: mergedContent,
       };
-    } catch {
+    } catch (networkErr: any) {
       return {
-        success: true,
-        message: 'Changes saved & verified in local high-capacity storage (Offline sync ready).',
+        success: false,
+        message: `Network error connecting to backend API: ${networkErr?.message || 'Server unreachable'}.`,
+        error: networkErr?.message || 'Network error',
         verifiedHeroSlides: heroVerification.slides,
         verifiedAt: new Date().toLocaleTimeString(),
         content: mergedContent,
