@@ -187,7 +187,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
+            'X-Admin-Token': token,
           },
+          credentials: 'include',
           body: JSON.stringify({
             base64Data: optimizedDataUrl,
             filename: file.name,

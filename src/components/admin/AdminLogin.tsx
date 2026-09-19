@@ -80,6 +80,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
           'Content-Type': 'application/json',
           'X-Anti-Tamper-Proof': antiTamperProof,
         },
+        credentials: 'include',
         body: JSON.stringify({ id: cleanId, pass: password }),
       });
 

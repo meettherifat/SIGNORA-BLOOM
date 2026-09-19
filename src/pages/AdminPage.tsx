@@ -90,8 +90,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigateHome }) => {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${activeToken}`,
+            'X-Admin-Token': activeToken,
             'Cache-Control': 'no-cache',
           },
+          credentials: 'include',
         });
 
         if (!isSubscribed) return;
@@ -160,7 +162,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigateHome }) => {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
+            'X-Admin-Token': token,
           },
+          credentials: 'include',
         });
       } catch (err) {
         console.warn('Server logout error:', err);

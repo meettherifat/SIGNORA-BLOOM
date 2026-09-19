@@ -16,6 +16,19 @@ const PORT = 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Permissive CORS & Preflight Middleware for embedded iframes and reverse proxies
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', (req.headers.origin as string) || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token, X-Auth-Token, Cache-Control, X-Anti-Tamper-Proof');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
 // Secure credentials & JWT Secret
 const ADMIN_ID = process.env.ADMIN_ID || '01959524393';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '@sara116';
@@ -328,15 +341,24 @@ function timingSafeCheck(a: string, b: string): boolean {
   return crypto.timingSafeEqual(hashA, hashB);
 }
 
-// Middleware: Require Admin Authentication (Supports JWT and active session tokens)
+// Middleware: Require Admin Authentication (Supports JWT, headers, cookies, and active session tokens)
 function requireAdminAuth(req: Request, res: Response, next: NextFunction): void {
+  let token = '';
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7).trim();
+  } else if (typeof req.headers['x-admin-token'] === 'string' && req.headers['x-admin-token'].trim()) {
+    token = req.headers['x-admin-token'].trim();
+  } else if (typeof req.headers['x-auth-token'] === 'string' && req.headers['x-auth-token'].trim()) {
+    token = req.headers['x-auth-token'].trim();
+  } else if (typeof req.query.token === 'string' && req.query.token.trim()) {
+    token = req.query.token.trim();
+  }
+
+  if (!token) {
     res.status(401).json({ error: 'Unauthorized: Missing or invalid token.' });
     return;
   }
-
-  const token = authHeader.substring(7).trim();
 
   // Check if token was explicitly revoked
   if (revokedTokens.has(token)) {
@@ -645,8 +667,8 @@ app.get('/api/content', (req: Request, res: Response) => {
   }
 });
 
-// 5. Save site content (Protected - Admin ONLY - Saves permanently to server)
-app.post('/api/content', requireAdminAuth, (req: Request, res: Response) => {
+// 5. Save site content handler (Protected - Admin ONLY - Saves permanently to server)
+const saveContentHandler = (req: Request, res: Response): void => {
   try {
     const { content } = req.body;
     if (!content || typeof content !== 'object') {
@@ -681,10 +703,13 @@ app.post('/api/content', requireAdminAuth, (req: Request, res: Response) => {
     console.error('Failed to save content to server:', error);
     res.status(500).json({ error: 'Internal server error while saving changes to server.' });
   }
-});
+};
 
-// 6. Reset site content to defaults (Protected - Admin ONLY)
-app.post('/api/content/reset', requireAdminAuth, (req: Request, res: Response) => {
+app.post('/api/content', requireAdminAuth, saveContentHandler);
+app.put('/api/content', requireAdminAuth, saveContentHandler);
+
+// 6. Reset site content to defaults handler (Protected - Admin ONLY)
+const resetContentHandler = (req: Request, res: Response): void => {
   try {
     if (fs.existsSync(CONTENT_FILE)) {
       fs.unlinkSync(CONTENT_FILE);
@@ -698,12 +723,15 @@ app.post('/api/content/reset', requireAdminAuth, (req: Request, res: Response) =
     console.error('Failed to reset content:', error);
     res.status(500).json({ error: 'Failed to reset content on server.' });
   }
-});
+};
+
+app.post('/api/content/reset', requireAdminAuth, resetContentHandler);
+app.put('/api/content/reset', requireAdminAuth, resetContentHandler);
 
 // 7. Image Upload Handler (Protected - Admin ONLY)
-app.post('/api/upload', requireAdminAuth, (req: Request, res: Response) => {
+const uploadImageHandler = (req: Request, res: Response): void => {
   try {
-    const { base64Data, filename } = req.body;
+    const { base64Data } = req.body;
     if (!base64Data) {
       res.status(400).json({ error: 'base64Data is required.' });
       return;
@@ -724,12 +752,16 @@ app.post('/api/upload', requireAdminAuth, (req: Request, res: Response) => {
     res.json({
       success: true,
       url: `/uploads/${safeName}`,
+      message: 'Image successfully uploaded and stored on server.',
     });
   } catch (error: any) {
-    console.error('Upload failed:', error);
-    res.status(500).json({ error: 'Failed to save uploaded image.' });
+    console.error('Failed to upload image:', error);
+    res.status(500).json({ error: error.message || 'Image upload failed on server.' });
   }
-});
+};
+
+app.post('/api/upload', requireAdminAuth, uploadImageHandler);
+app.put('/api/upload', requireAdminAuth, uploadImageHandler);
 
 /* ==========================================================================
    VITE DEVELOPMENT & PRODUCTION SERVING

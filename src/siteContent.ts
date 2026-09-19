@@ -73,7 +73,7 @@ export interface SiteContent {
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   "brand": {
-    "name": "SIGNORA BLOOM",
+    "name": "Signora Bloom",
     "tagline": "A Curated Collection of Everyday Elegance.",
     "phone": "+1 (800) 843-2678",
     "email": "concierge@signorabloom.com",
